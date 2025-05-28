@@ -1,0 +1,19 @@
+#define <target> <new_expression>
+.data/.text
+.num
+.byte
+.org
+label:
+not
+read <label>
+write <label>
+add <label>
+sub <label>
+mul <label>
+and <label>
+or <label>
+beq <label>
+bne <label>
+jump <label>
+halt
+

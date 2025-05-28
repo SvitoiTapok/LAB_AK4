@@ -1,0 +1,10 @@
+    .data
+input_addr:      .num  2200
+output_addr:     .num  0001
+
+    .text
+    .org 100
+_start:
+    and input_addr
+    not
+    read output_addr
