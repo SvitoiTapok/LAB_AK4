@@ -3,7 +3,7 @@
 
 from collections import namedtuple
 from enum import Enum
-
+import shlex
 
 class Opcode(str, Enum):
     """Opcode для инструкций.
@@ -26,6 +26,8 @@ class Opcode(str, Enum):
     NOT = "invert bits"
     READ = "read"
     WRITE = "write"
+    READ_IND = "read value from address in arg"
+    WRITE_IND = "write value from address in arg"
     ADD = "add"
     SUB = "subtract"
     MUL = "multiply"
@@ -33,7 +35,11 @@ class Opcode(str, Enum):
     OR = "logical or"
     BEQ = "jump if equal"
     BNE = "jump if negative"
+    BVS = "jump if V"
+    BCS = "jump if C"
     JUMP = "jump"
+    INPUT = "input"
+    OUTPUT = "output"
     HALT = "halt"
 
     def __str__(self):
@@ -59,8 +65,14 @@ opcode_to_binary = {
     Opcode.OR: '0x07',
     Opcode.BEQ: '0x08',
     Opcode.BNE: '0x09',
-    Opcode.JUMP: '0x0a',
-    Opcode.HALT: '0x0b'
+    Opcode.BVS: '0x0a',
+    Opcode.BCS: '0x0b',
+    Opcode.JUMP: '0x0c',
+    Opcode.INPUT: '0x0d',
+    Opcode.OUTPUT: '0x0e',
+    Opcode.READ_IND: '0x0f',
+    Opcode.WRITE_IND: '0x10',
+    Opcode.HALT: '0x11'
 }
 
 binary_to_opcode = {
@@ -74,8 +86,14 @@ binary_to_opcode = {
     '0x07':    Opcode.OR,
     '0x08':   Opcode.BEQ,
     '0x09':   Opcode.BNE,
-    '0x0a':  Opcode.JUMP,
-    '0x0b':  Opcode.HALT
+    '0x0a':   Opcode.BVS,
+    '0x0b':   Opcode.BCS,
+    '0x0c':  Opcode.JUMP,
+    '0x0d': Opcode.INPUT,
+    '0x0e': Opcode.OUTPUT,
+    '0x0f': Opcode.READ_IND,
+    '0x10': Opcode.WRITE_IND,
+    '0x11':  Opcode.HALT
 }
 
 
@@ -121,12 +139,32 @@ def to_hex(memory, text_ind, labels, data_ind):
     binary_code = memory
     result = []
     i=data_ind
+    strin=""
+    curlab=''
     while i<text_ind:
         if binary_code[i]==0:
             i+=1
             continue
+        if i in revers_labels:
+            if strin == "":
+                strin = f"{i} - data - "
+                curlab = revers_labels[i]
+            else:
+                strin += f"          {curlab}"
+                result.append(strin)
+                strin = f"{i} - data - "
+                curlab = revers_labels[i]
+        byte = binary_code[i][2:]
+        if len(byte) == 1:
+            byte = '0' + byte
+        strin += byte
+        i += 1
+    strin += f"          {curlab}"
+    result.append(strin)
 
+    print(result)
     i=text_ind
+    print(text_ind)
     while i<len(binary_code):
         if binary_code[i]==0:
             i+=1

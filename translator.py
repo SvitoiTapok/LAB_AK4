@@ -3,17 +3,21 @@
 """
 
 import os
+import re
+import shlex
 import sys
 from cProfile import label
 
+import numpy as np
+
 from isa import Opcode, Term, to_bytes, to_hex, opcode_to_binary
 
-memory = [0] * 2 ** 8
+memory = [0] * 2 ** 16
 labels = {}
 number_of_byte = 0
 def symbols():
     """Полное множество символов языка brainfuck."""
-    return {"not", "read", "write", "add", "sub", "mul", "and", "or", "beq", "bne", "jump", "halt"}
+    return {"not", "read", "write", "add", "sub", "mul", "and", "or", "beq", "bne","bvs", "bcs", "jump", "input", "output", "read_ind", "write_ind", "halt"}
 
 
 def symbol2opcode(symbol):
@@ -29,7 +33,13 @@ def symbol2opcode(symbol):
         "or": Opcode.OR,
         "beq": Opcode.BEQ,
         "bne": Opcode.BNE,
+        "bvs": Opcode.BVS,
+        "bcs": Opcode.BCS,
         "jump": Opcode.JUMP,
+        "input": Opcode.INPUT,
+        "output": Opcode.OUTPUT,
+        "read_ind": Opcode.READ_IND,
+        "write_ind": Opcode.WRITE_IND,
         "halt": Opcode.HALT,
     }.get(symbol)
 
@@ -82,8 +92,17 @@ def text2terms(text, i):
 
 
 def int_to_bytes(integ):
-    return hex(integ%2**8), hex(integ//2**8%2**8), hex(integ//2**16%2**8), hex(integ//2**24%2**8),
-
+    first = hex(integ%2**8)
+    second = hex(integ//2**8%2**8)
+    third = hex(integ//2**16%2**8)
+    fourth = hex(integ//2**24%2**8)
+    if len(first)==3: first = '0x0' + first[-1]
+    if len(second)==3: second = '0x0' + second[-1]
+    if len(third)==3: third = '0x0' + third[-1]
+    if len(fourth)==3: fourth = '0x0' + fourth[-1]
+    return first, second, third, fourth
+def byte_to_int(bytes):
+    return int(bytes[0], 16) + int(bytes[1], 16)*2**8 + int(bytes[2], 16)*2**16 + int(bytes[3], 16)*2**24
 
 
 
@@ -106,7 +125,8 @@ def translate(text):
     `isa.Opcode`.
 
     """
-    text = text.split()
+    text = re.sub(r';.*$', '', text, flags=re.MULTILINE)
+    text = shlex.split(text, posix=False)
     i=0
     #макроопределения
 
@@ -114,7 +134,8 @@ def translate(text):
         ind = text.index("#define")
         define_target = text[ind+1]
         define_new_value = text[ind+2]
-        text = ' '.join(text).replace(define_target, define_new_value).split()
+        new_text = text[:text.index("#define")] + text[text.index("#define")+3:]
+        text = ' '.join(new_text).replace(define_target, define_new_value).split()
 
 
     #потом подправить
@@ -127,13 +148,17 @@ def translate(text):
     print(text)
 
 
-
+    memory_data_ind = 0
     ind = data_ind+1
+    fl = True
     while ind<text_ind:
         if text[ind] == ".org":
             number_of_byte += int(text[ind+1])
             ind += 2
             continue
+        if fl:
+            memory_data_ind = number_of_byte
+            fl = False
         lab = text[ind][:-1]
         type = text[ind+1]
         labels[lab] = number_of_byte
@@ -143,16 +168,17 @@ def translate(text):
             memory[number_of_byte:number_of_byte+4] = int_to_bytes(value)
             number_of_byte += 4
         if type == ".byte":
-            value = text[ind+2]
+            value = text[ind+2][1:-1]
             for char in value:
                 memory[number_of_byte] = hex(ord(char))
                 number_of_byte += 1
         ind += 3
+    assert not "_start" in labels, "Не найдена метка _start"
 
     print(labels)
     i = text_ind+1
     terms = text2terms(text, i)
-
+    memory_text_ind = number_of_byte
     # Транслируем термы в машинный код.
     code = []
     for pc, term in enumerate(terms):
@@ -165,8 +191,8 @@ def translate(text):
             else:
                 memory[number_of_byte] = opcode_to_binary[symbol2opcode(val)]
                 number_of_byte+=1
-                new_value = parse_label(term[1])
-                memory[number_of_byte:number_of_byte+4] = int_to_bytes(new_value)
+                # new_value = parse_label(term[1])
+                # memory[number_of_byte:number_of_byte+4] = int_to_bytes(new_value)
                 number_of_byte+=4
                 code.append({"index": pc, "opcode": symbol2opcode(val), "arg": term[1]})
                 # begin = {"index": pc, "opcode": Opcode.JZ, "arg": pc + 1, "term": terms[begin_pc]}
@@ -178,32 +204,61 @@ def translate(text):
             continue
         if val.endswith(":"):
             labels[val[:-1]] = number_of_byte
-    code.append({"index": len(code), "opcode": Opcode.HALT})
-    return code, text_ind
+    number_of_byte = memory_text_ind
 
-def main():
-# def main(source, target):
+
+    #для корректного парса лэйблов
+    for pc, term in enumerate(terms):
+        val = term[0]
+        if val in symbols():
+            if val == "halt" or val == "not":
+                number_of_byte += 1
+            else:
+                number_of_byte += 1
+                new_value = parse_label(term[1])
+                memory[number_of_byte:number_of_byte+4] = int_to_bytes(new_value)
+                number_of_byte += 4
+        if val == ".org":
+            number_of_byte += int(text[i + 1])
+
+    code.append({"index": len(code), "opcode": Opcode.HALT})
+    return code, memory_text_ind, memory_data_ind, labels.get("_start")
+
+# def main():
+def main(source, target):
     """Функция запуска транслятора. Параметры -- исходный и целевой файлы."""
     # with open(source, encoding="utf-8") as f:
     #     source = f.read()
-    source = ""
-    with open("asm_code", encoding="utf-8") as f:
+    with open(source, encoding="utf-8") as f:
         source = f.read()
-    code, text_ind = translate(source)
+    code, text_ind, data_ind, start_ind = translate(source)
     # binary_code = to_bytes(code)
     # hex_code = to_hex(code)
-    print(code)
-    print(memory[:200])
-    print(to_hex(memory, text_ind+1, labels))
+    # print(code)
+    # print(memory[:200])
+    # print(start_ind)
+    # print(to_hex(memory, text_ind, labels, data_ind))
 
     # Убедимся, что каталог назначения существует
-    # os.makedirs(os.path.dirname(os.path.abspath(target)) or ".", exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.abspath(target)) or ".", exist_ok=True)
 
     # Запишим выходные файлы
-    # with open(target, "wb") as f:
-    #     f.write(binary_code)
-    # with open(target + ".hex", "w") as f:
-    #     f.write(hex_code)
+    with open(target, "wb") as f:
+        numbers = [int(x, 16) for x in int_to_bytes(start_ind)]
+        # print(int_to_bytes(start_ind))
+        # print(start_ind)
+        byte_data = bytes(numbers)
+        f.write(byte_data)
+        numbers = []
+        for x in memory:
+            if type(x)==str:
+                numbers.append(int(x, 16))
+            else:
+                numbers.append(x)
+        byte_data = bytes(numbers)
+        f.write(byte_data)
+    with open(target + ".hex", "w") as f:
+        f.write(to_hex(memory, text_ind, labels, data_ind))
 
     # Обратите внимание, что память данных не экспортируется в файл, так как
     # в случае brainfuck она может быть инициализирована только 0.
@@ -211,7 +266,6 @@ def main():
 
 
 if __name__ == "__main__":
-    # assert len(sys.argv) == 3, "Wrong arguments: translator.py <input_file> <target_file>"
-    # _, source, target = sys.argv
-    # main(source, target)
-    main()
+    assert len(sys.argv) == 3, "Wrong arguments: translator.py <input_file> <target_file>"
+    _, source, target = sys.argv
+    main(source, target)

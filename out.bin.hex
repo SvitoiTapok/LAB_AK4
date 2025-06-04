@@ -1,0 +1,16 @@
+0 - data - 68656c6c6f2c20776f726c6421          buffer
+13 - data - 00000000          buf_addr
+17 - data - 01000000          const_1
+21 - data - 01000000          out_1
+25 - data - 0d000000          const_len
+29 - data - ff000000          mask
+33 - 0x0f 0d000000 - read value from address in arg          loop
+38 - 0x06 1d000000 - logical and
+43 - 0x0e 15000000 - output
+48 - 0x01 0d000000 - read
+53 - 0x03 11000000 - add
+58 - 0x02 0d000000 - write
+63 - 0x04 19000000 - subtract
+68 - 0x08 4e000000 - jump if equal
+73 - 0x0c 21000000 - jump
+78 - 0x11 - halt          end

@@ -1,10 +1,13 @@
+#define 2200 8888
     .data
-input_addr:      .num  2200
+input_addr:      .num  2200 ;fdfasdfasdfsadfsadfsadfsdafasd
 output_addr:     .num  0001
-
+buffer:          .byte 'fdafdasfdasioewolkejfiojwoifsdkafjio uhfwasfadflld'
+#define 00 01
     .text
     .org 100
 _start:
     and input_addr
     not
     read output_addr
+    halt

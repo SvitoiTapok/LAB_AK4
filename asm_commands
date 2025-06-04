@@ -7,6 +7,8 @@ label:
 not
 read <label>
 write <label>
+read_ind <label>
+write_ind <label>
 add <label>
 sub <label>
 mul <label>
@@ -14,6 +16,10 @@ and <label>
 or <label>
 beq <label>
 bne <label>
+bvs <label>
+bcs <label>
 jump <label>
+input <gate_num>
+output <gate_num>
 halt
 

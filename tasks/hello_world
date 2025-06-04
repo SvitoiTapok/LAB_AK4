@@ -1,0 +1,21 @@
+    .data
+buffer:     .byte   'hello, world!'
+buf_addr:   .num    0
+const_1:    .num    1
+out_1:      .num    1
+const_len:  .num    13 ;len of buffer
+mask:       .num    255 ;aka 0xff
+    .text
+_start:
+loop:
+    read_ind    buf_addr
+    and         mask
+    output      out_1
+    read        buf_addr
+    add         const_1
+    write       buf_addr
+    sub         const_len
+    beq         end
+    jump        loop
+end:
+    halt
