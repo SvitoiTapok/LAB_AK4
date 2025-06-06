@@ -40,6 +40,7 @@ class Opcode(str, Enum):
     JUMP = "jump"
     INPUT = "input"
     OUTPUT = "output"
+    MUL_HIGH = "high part of mult(high 32 bits)"
     HALT = "halt"
 
     def __str__(self):
@@ -72,7 +73,8 @@ opcode_to_binary = {
     Opcode.OUTPUT: '0x0e',
     Opcode.READ_IND: '0x0f',
     Opcode.WRITE_IND: '0x10',
-    Opcode.HALT: '0x11'
+    Opcode.MUL_HIGH: '0x11',
+    Opcode.HALT: '0x12'
 }
 
 binary_to_opcode = {
@@ -93,7 +95,8 @@ binary_to_opcode = {
     '0x0e': Opcode.OUTPUT,
     '0x0f': Opcode.READ_IND,
     '0x10': Opcode.WRITE_IND,
-    '0x11':  Opcode.HALT
+    '0x11': Opcode.MUL_HIGH,
+    '0x12': Opcode.HALT
 }
 
 

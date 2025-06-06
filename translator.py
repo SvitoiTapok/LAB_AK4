@@ -17,7 +17,7 @@ labels = {}
 number_of_byte = 0
 def symbols():
     """Полное множество символов языка brainfuck."""
-    return {"not", "read", "write", "add", "sub", "mul", "and", "or", "beq", "bne","bvs", "bcs", "jump", "input", "output", "read_ind", "write_ind", "halt"}
+    return {"not", "read", "write", "add", "sub", "mul", "and", "or", "beq", "bne","bvs", "bcs", "jump", "input", "output", "read_ind", "write_ind", "mul_high", "halt"}
 
 
 def symbol2opcode(symbol):
@@ -40,6 +40,7 @@ def symbol2opcode(symbol):
         "output": Opcode.OUTPUT,
         "read_ind": Opcode.READ_IND,
         "write_ind": Opcode.WRITE_IND,
+        "mul_high": Opcode.MUL_HIGH,
         "halt": Opcode.HALT,
     }.get(symbol)
 
@@ -106,7 +107,8 @@ def int_to_bytes(integ):
     if len(fourth)==3: fourth = '0x0' + fourth[-1]
     return first, second, third, fourth
 def byte_to_int(bytes):
-    return int(bytes[0], 16) + int(bytes[1], 16)*2**8 + int(bytes[2], 16)*2**16 + int(bytes[3], 16)*2**24
+    return int.from_bytes([int(x, 16) for x in bytes], byteorder='little', signed=True)
+    #return int(bytes[0], 16) + int(bytes[1], 16)*2**8 + int(bytes[2], 16)*2**16 + int(bytes[3], 16)*2**24
 def int_to_chars(integ):
     first = chr(integ%2**8)
     second = chr(integ//2**8%2**8)

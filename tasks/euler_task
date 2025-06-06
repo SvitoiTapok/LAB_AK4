@@ -1,0 +1,50 @@
+#define out_num  2
+
+    .data ; разница между (1+...+100)^2 и 1^2+2^2+...+100^2
+sum_square: .num    0
+square_sum: .num    0
+const_100:  .num    100
+const_1:    .num    1
+cur_num:    .num    1
+out:        .num    out_num
+
+    .text
+_start:
+sum_sq:
+    read        cur_num
+    mul         cur_num
+    add         sum_square
+    write       sum_square
+
+    read        cur_num
+    sub         const_100
+    beq         sq_sum_prep
+    read        cur_num
+    add         const_1
+    write       cur_num
+    jump        sum_sq
+
+
+sq_sum_prep:
+    read       const_1
+    write       cur_num
+sq_sum:
+    read        cur_num
+    add         square_sum
+    write       square_sum
+
+    read        cur_num
+    sub         const_100
+    beq         sq_process
+    read        cur_num
+    add         const_1
+    write       cur_num
+    jump        sq_sum
+
+sq_process:
+    read        square_sum
+    mul         square_sum
+    sub         sum_square
+    output      out
+end:
+    halt

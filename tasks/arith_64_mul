@@ -1,0 +1,38 @@
+#define out_num  1
+
+    .data ; умножение двух 32-х битных чисел и запись результата в 8 байт
+sum_low:    .num    0
+sum_high:   .num    0
+sum_point:  .num    0 ; было решено выводить посимвольно чтобы показать, что сложение прошло корректно
+byte_c:     .num    8; 8 байт
+mask:       .num    255
+num_1:      .num    16777216 ; ff ff ff ff
+num_2:      .num    16777216 ; 00 00 00 42
+const_1:    .num    1
+out:        .num    out_num
+
+    .text
+_start:
+    read        num_1
+    mul         num_2
+    write       sum_low
+    read        num_1
+    mul_high    num_2
+    write       sum_high
+out_fetch:
+    read_ind    sum_point
+    and         mask
+    output      out
+
+    read        byte_c
+    sub         const_1
+    write       byte_c
+    beq         end
+    read        sum_point
+    add         const_1
+    write       sum_point
+    jump        out_fetch
+
+
+end:
+    halt

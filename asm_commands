@@ -21,5 +21,6 @@ bcs <label>
 jump <label>
 input <gate_num>
 output <gate_num>
+mul_high <label>
 halt
 

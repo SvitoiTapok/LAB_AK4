@@ -98,6 +98,14 @@ class ALU:
 
         self.left_input = np.int32(0)
         self.right_input = np.int32(0)
+    def signal_mul_high(self):
+        x = self.right_input
+        y = self.right_input
+        mul_int = x.astype(int) * y.astype(int) // 2**32
+        self.out = mul_int
+
+        self.left_input = np.int32(0)
+        self.right_input = np.int32(0)
 
     def signal_not(self):
         self.out = ~self.out
@@ -135,11 +143,11 @@ class DataPath:
     "Аккумулятор. Инициализируется нулём."
     data_operand = None
 
-    input_buffer_1 = None
-    input_buffer_2 = None
+    input_buffer1 = None
+    input_buffer2 = None
 
-    output_buffer_1 = None
-    output_buffer_2 = None
+    output_buffer1 = None
+    output_buffer2 = None
     "Буфер выходных данных."
 
     def __init__(self, data_memory_size, data, input_buffer1, input_buffer2, pc):
@@ -157,14 +165,15 @@ class DataPath:
         self.output_buffer2 = []
 
     def signal_input(self, num):
-        print(self.input_buffer1)
+        print(self.input_buffer2)
+        # было принято непростое решение сделать первый поток ввода для символов, второй для чисел
         try:
             if num==1:
                 byt, self.input_buffer1 = self.input_buffer1[0], self.input_buffer1[1:]
                 self.acc = ord(byt)
             if num==2:
-                byt, self.input_buffer2 = self.input_buffer2[0], self.input_buffer2[4:]
-                self.acc = byte_to_int(byt)
+                num, self.input_buffer2 = self.input_buffer2[0], self.input_buffer2[1:]
+                self.acc = num
         except:
             assert 0, "read from empty buffer"
 
@@ -192,7 +201,8 @@ class DataPath:
         # logging.debug("input: %s", repr(symbol))
 
     def signal_output(self, num):
-        # logging.debug("output: %s << %s", repr("".join(self.output_buffer)), repr(symbol))
+        # logging.debug("output: %s << %s", repr("".join(self.output_buffer)), repr(symbol));
+
         if num == 1:
             self.output_buffer1.append(self.acc)
         if num == 2:
@@ -281,8 +291,8 @@ class ControlUnit:
 
     """
 
-    data = None
-    "Память команд."
+    # data = None
+    # "Память команд."
 
     data_path = None
     "Блок обработки данных."
@@ -291,7 +301,7 @@ class ControlUnit:
     "Текущее модельное время процессора (в тактах). Инициализируется нулём."
 
     def __init__(self, data, data_path):
-        self.data = data
+        # self.data = data
         self.data_path = data_path
         self._tick = 0
         self.step = 0
@@ -350,6 +360,7 @@ class ControlUnit:
 
         self.data_path.signal_latch_pc(Selector.ADD1)
         if opcode is Opcode.HALT:
+            print(self.data_path.data[:100])
             raise StopIteration()
 
         if opcode is Opcode.NOT:
@@ -482,6 +493,14 @@ class ControlUnit:
             self.read_arg()
             print("debug: ", self.data_path.data_operand)
             self.data_path.signal_output(self.data_path.data_operand)
+        if opcode is Opcode.MUL_HIGH:
+            self.read_arg()
+            self.data_path.signal_latch_ALU_left_input()
+            self.data_path.signal_latch_ALU_right_input()
+            self.data_path.ALU.signal_mul_high()
+            print(self.data_path.ALU.out)
+
+            self.data_path.signal_latch_acc()
         # if opcode in {Opcode.RIGHT, Opcode.LEFT}:
         #     self.data_path.signal_latch_data_addr(opcode.value)
         #     self.signal_latch_program_counter(sel_next=True)
@@ -566,8 +585,10 @@ def simulation(data, input_1, input_2, data_memory_size, limit, pc):
 
     if control_unit._tick >= limit:
         logging.warning("Limit exceeded!")
-    logging.info("output_buffer: %s", repr(" ".join(map(chr, data_path.output_buffer1))))
-    return " ".join(map(str, data_path.output_buffer1)), control_unit.current_tick()
+    logging.info("output_buffer1: %s", repr(" ".join(map(chr, data_path.output_buffer1))))
+    logging.info("output_buffer2: %s", repr(" ".join(map(str, data_path.output_buffer2))))
+
+    return " ".join(map(str, data_path.output_buffer2)), " ".join(map(str, data_path.output_buffer1)), control_unit.current_tick()
 
 
 def main(code_file, input_file):
@@ -576,37 +597,46 @@ def main(code_file, input_file):
     """
 
     #так как для удобства ввода формирование паскаль строки и длины массива происходит вне входного файла(здесь) нам нужно различать ввод символов и чисел
-    symbol_file = True
+
     with open(code_file, "rb") as file:
-        if "sort" in code_file:
-            symbol_file = False
+
         binary_code = file.read()
     data = [f"0x{byte:02x}" for byte in binary_code]
     start_ind, data = byte_to_int(data[:4]), data[4:]
 
 
-
+    symbol_file = True
+    input_1 = []
+    input_2 = []
     #надо решить че там с двумя потоками ввода
     with open(input_file, encoding="utf-8") as file:
-        input_text = file.read()
-        input_token = []
-        for char in input_text:
-            input_token.append(char)
+        if ".num" in input_file:
+            symbol_file = False
         if symbol_file:
-            input_token = list(int_to_chars(len(input_token))) + input_token
+            input_text = file.read()
+            input_token = []
+            for char in input_text:
+                input_token.append(char)
+            input_1 = list(int_to_chars(len(input_token))) + input_token
         else:
-            input_token = list(int_to_chars(len(input_token)//4)) + input_token
+            line = file.readline()
+            mass = []
+            for i in line.split():
+                mass = mass + [int(i)]
+            input_2 = [len(mass)] + mass
 
-    output, ticks = simulation(
+    output1, output2, ticks = simulation(
         data,
-        input_1=input_token,
-        input_2=[],
+        input_1=input_1,
+        input_2=input_2,
         data_memory_size=15000,
         limit=2000,
         pc=start_ind
     )
 
-    print("".join(output))
+
+    print("".join(output1))
+    print("".join(output2))
     print("ticks:", ticks)
 
 

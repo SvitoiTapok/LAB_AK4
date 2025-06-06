@@ -1,0 +1,49 @@
+#define out_num  1
+
+    .data ; сложение двух 64-х битных чисел
+sum_low:    .num    0
+sum_high:   .num    0
+sum_point:  .num    0 ; было решено выводить посимвольно чтобы показать, что сложение прошло корректно
+byte_c:     .num    8; 8 байт
+mask:       .num    255
+num_1_low:  .num    -1 ; ff ff ff ff
+num_1_high: .num    1  ; 00 00 00 01
+num_2_low:  .num    66 ; 00 00 00 42
+num_2_high: .num    2  ; 00 00 00 02
+const_1:    .num    1
+
+out:        .num    out_num
+    .text
+_start:
+    read        num_1_low
+    add         num_2_low
+    bcs         carry
+    read        num_1_high
+    add         num_2_high
+    write       sum_high
+    jump        out_fetch
+
+carry:
+    write       sum_low
+    read        num_1_high
+    add         const_1
+    add         num_2_high
+    write       sum_high
+
+out_fetch:
+    read_ind    sum_point
+    and         mask
+    output      out
+
+    read        byte_c
+    sub         const_1
+    write       byte_c
+    beq         end
+    read        sum_point
+    add         const_1
+    write       sum_point
+    jump        out_fetch
+
+
+end:
+    halt
