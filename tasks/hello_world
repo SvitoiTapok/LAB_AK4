@@ -3,7 +3,7 @@ buffer:     .byte   'hello, world!'
 buf_addr:   .num    0
 const_1:    .num    1
 out_1:      .num    1
-const_len:  .num    13 ;len of buffer
+const_len:  .num    13  ;len of buffer
 mask:       .num    255 ;aka 0xff
     .text
 _start:

@@ -1,0 +1,68 @@
+    .data
+message:    .byte   'What is your name?'
+mes_len:    .num    18
+mes_addr:   .num    0
+hello:      .byte   'Hello, '
+hel_len:    .num    33; 7 for len + 26 for start ind
+hel_addr:   .num    26
+
+
+const_1:    .num    1
+out_1:      .num    1
+in_1:       .num    1 ;пусть передана паскаль строка
+
+sym_count:  .num    0
+mask:       .num    255
+mult:       .num    256 ;константа для корректного парсинга чисел
+byt_count:  .num    1
+total_b_co: .num    16777216
+
+    .text
+_start:
+len_fetch:
+    input       in_1
+    mul         byt_count
+    add         sym_count ;запись 4-х байного числа в переменную sym_count
+    write       sym_count
+    read        byt_count
+    sub         total_b_co
+    beq         choose_message
+    read        byt_count
+    mul         mult
+    write       byt_count
+    jump        len_fetch
+
+default_message:
+    read_ind    mes_addr
+    and         mask
+    output      out_1
+    read        mes_addr
+    add         const_1
+    write       mes_addr
+    sub         mes_len
+    beq         end
+    jump        default_message
+
+choose_message:
+    read        sym_count
+    beq         default_message
+hello_message:
+    read_ind    hel_addr
+    and         mask
+    output      out_1
+    read        hel_addr
+    add         const_1
+    write       hel_addr
+    sub         hel_len
+    beq         write_name
+    jump        hello_message
+write_name:
+    input       in_1
+    output      out_1
+    read        sym_count
+    sub         const_1
+    beq         end ;проверка на конец
+    write       sym_count
+    jump        write_name
+end:
+    halt

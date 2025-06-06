@@ -19,7 +19,7 @@ from unittest.mock import right
 import numpy as np
 
 from isa import Opcode, from_bytes, opcode_to_binary, binary_to_opcode
-from translator import byte_to_int, int_to_bytes
+from translator import byte_to_int, int_to_bytes, int_to_chars
 
 
 class Selector(str, Enum):
@@ -91,6 +91,7 @@ class ALU:
     def signal_mul(self):
         x = self.right_input
         y = self.left_input
+        print(x, y)
         self.out = x * y
         sum_int = x.astype(int) * y.astype(int)
         self.V = sum_int > self.out
@@ -156,13 +157,14 @@ class DataPath:
         self.output_buffer2 = []
 
     def signal_input(self, num):
+        print(self.input_buffer1)
         try:
             if num==1:
                 byt, self.input_buffer1 = self.input_buffer1[0], self.input_buffer1[1:]
-                self.acc = int(byt)
+                self.acc = ord(byt)
             if num==2:
-                number, self.input_buffer2 = self.input_buffer2[0], self.input_buffer2[1:]
-                self.acc = number
+                byt, self.input_buffer2 = self.input_buffer2[0], self.input_buffer2[4:]
+                self.acc = byte_to_int(byt)
         except:
             assert 0, "read from empty buffer"
 
@@ -190,7 +192,6 @@ class DataPath:
         # logging.debug("input: %s", repr(symbol))
 
     def signal_output(self, num):
-        symbol = chr(self.acc)
         # logging.debug("output: %s << %s", repr("".join(self.output_buffer)), repr(symbol))
         if num == 1:
             self.output_buffer1.append(self.acc)
@@ -344,14 +345,10 @@ class ControlUnit:
         """
         self.data_path.signal_latch_addres_reg(Selector.PC)
         self.data_path.signal_read()
-        print(self.data_path.data_operand)
-        print(self.data_path.get_opcode())
         opcode = binary_to_opcode[self.data_path.get_opcode()]
         print(opcode)
-        print(self.data_path.program_counter)
 
         self.data_path.signal_latch_pc(Selector.ADD1)
-        print(self.data_path.program_counter)
         if opcode is Opcode.HALT:
             raise StopIteration()
 
@@ -420,15 +417,14 @@ class ControlUnit:
             self.data_path.signal_latch_ALU_left_input()
             self.data_path.signal_latch_ALU_right_input()
             self.data_path.ALU.signal_mul()
+            print(self.data_path.ALU.out)
 
             self.data_path.signal_latch_acc()
         if opcode is Opcode.AND:
-            print(self.data_path.program_counter)
             self.read_arg()
             self.data_path.signal_latch_ALU_left_input()
             self.data_path.signal_latch_ALU_right_input()
             self.data_path.ALU.signal_and()
-            print(self.data_path.program_counter)
 
             self.data_path.signal_latch_acc()
         if opcode is Opcode.OR:
@@ -479,10 +475,8 @@ class ControlUnit:
             self.data_path.signal_latch_pc(Selector.DATA_OPERAND)
 
         if opcode is Opcode.INPUT:
-            self.data_path.signal_latch_addres_reg(Selector.PC)
-            self.data_path.signal_read()
+            self.read_arg()
             self.data_path.signal_input(self.data_path.data_operand)
-            self.data_path.signal_latch_pc(Selector.ADD4)
 
         if opcode is Opcode.OUTPUT:
             self.read_arg()
@@ -572,7 +566,7 @@ def simulation(data, input_1, input_2, data_memory_size, limit, pc):
 
     if control_unit._tick >= limit:
         logging.warning("Limit exceeded!")
-    logging.info("output_buffer: %s", repr(" ".join(map(str, data_path.output_buffer1))))
+    logging.info("output_buffer: %s", repr(" ".join(map(chr, data_path.output_buffer1))))
     return " ".join(map(str, data_path.output_buffer1)), control_unit.current_tick()
 
 
@@ -580,12 +574,15 @@ def main(code_file, input_file):
     """Функция запуска модели процессора. Параметры -- имена файлов с машинным
     кодом и с входными данными для симуляции.
     """
+
+    #так как для удобства ввода формирование паскаль строки и длины массива происходит вне входного файла(здесь) нам нужно различать ввод символов и чисел
+    symbol_file = True
     with open(code_file, "rb") as file:
+        if "sort" in code_file:
+            symbol_file = False
         binary_code = file.read()
-    data = [f"0x{byte:02x}" for byte in binary_code[:200]]
+    data = [f"0x{byte:02x}" for byte in binary_code]
     start_ind, data = byte_to_int(data[:4]), data[4:]
-    print(data)
-    print(start_ind)
 
 
 
@@ -595,12 +592,16 @@ def main(code_file, input_file):
         input_token = []
         for char in input_text:
             input_token.append(char)
+        if symbol_file:
+            input_token = list(int_to_chars(len(input_token))) + input_token
+        else:
+            input_token = list(int_to_chars(len(input_token)//4)) + input_token
 
     output, ticks = simulation(
         data,
         input_1=input_token,
         input_2=[],
-        data_memory_size=1024,
+        data_memory_size=15000,
         limit=2000,
         pc=start_ind
     )

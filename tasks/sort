@@ -1,0 +1,152 @@
+    .data
+    .org 10000 ; -> максимальная длина передаваемого массива - 2500 32-битных чисел
+
+const_4:    .num    4
+const_1:    .num    1
+out_1:      .num    1
+in_1:       .num    1 ;пусть передана паскаль строка
+
+count:      .num    0;  общее количество элементов
+el_count:   .num    0;  количество обработанных элементов
+p_el_count: .num    0;  количество элементов, которые надо переставить(стоящих правее добавленного элемента)
+nul_point:  .num    0;  константный ноль, указывающий на начало списка
+cur_point:  .num    0;  текущее положение в списке
+cur_el:     .num    0;  текущий элемент
+buf_el:     .num    0; буфферный элемент, нужен при смещении элементов
+mask:       .num    255
+
+
+mult:       .num    256 ;константа для корректного парсинга чисел
+byt_count:  .num    1
+total_b_co: .num    16777216
+
+    .text
+
+_start:
+count_fetch:
+    input       in_1
+    mul         byt_count
+    add         count ;запись 4-х байного числа в переменную count
+    write       count
+    read        byt_count
+    sub         total_b_co
+    beq         first_iteration_preparing        ;можно обработать ввод числа большего чем 2500, но это усложнит код и задание как-будто не про это
+    read        byt_count
+    mul         mult
+    write       byt_count
+    jump        count_fetch
+
+
+
+first_iteration_preparing:
+    read        const_1
+    write       byt_count  ; 1->byt_count
+
+first_iteration_read:
+
+
+    input       in_1
+    mul         byt_count
+    add         cur_el ;запись 4-х байного числа в переменную cur_el
+    write       cur_el
+    read        byt_count
+    sub         total_b_co
+    beq         first_iteration_write        ;можно обработать ввод числа большего чем 2500, но это усложнит код и задание как-будто не про это
+    read        byt_count
+    mul         mult
+    write       byt_count
+    jump        first_iteration_read
+
+first_iteration_write:
+    read        cur_el
+    write_ind   nul_point
+
+
+sort_preparing:
+    read        el_count
+    add         const_1
+    write       el_count
+    sub         count
+    beq         output_answ
+
+    read        nul_point
+    write       cur_el
+    write       cur_point
+
+    read        const_1
+    write       byt_count  ; 1->byt_count
+
+sort_read:
+    input       in_1
+    mul         byt_count
+    add         cur_el ;запись 4-х байного числа в переменную cur_el
+    write       cur_el
+    read        byt_count
+    sub         total_b_co
+    beq         find_write_ind        ;можно обработать ввод числа большего чем 2500, но это усложнит код и задание как-будто не про это
+    read        byt_count
+    mul         mult
+    write       byt_count
+    jump        sort_read
+
+find_write_ind:;у нас есть cur_el, мы должны пометить в cur_point позицию, куда его надо вставить, а все остальное(остальные p_el_count) сдвинуть вправо
+    read        el_count
+    write       p_el_count
+
+
+    read_ind    cur_point
+    sub         cur_el
+    not
+    add         const_1 ;для вывода от меньшего к большему
+    bne         write_element
+
+    read        cur_point
+    add         const_4
+    write       cur_point
+
+    read        p_el_count
+    sub         const_1
+    write       p_el_count
+    beq         write_element
+
+
+    jump        find_write_ind
+
+write_element:
+    read_ind    cur_point
+    write       buf_el
+    read        cur_el
+    write_ind   cur_point
+
+    read        p_el_count
+    beq         sort_preparing
+    sub         const_1
+    write       p_el_count
+
+    read        cur_point
+    add         const_4
+    write       cur_point
+
+    read        buf_el
+    write       cur_el
+    jump        write_element
+output_answ:
+    read        count
+    mul         const_4
+    write       count
+loop:
+    read_ind    nul_point
+    and         mask
+    output      out_1
+    read        nul_point
+    add         const_1
+    write       nul_point
+    read        count
+    sub         const_1
+    beq         end
+    write       count
+    jump        loop
+
+
+end:
+    halt

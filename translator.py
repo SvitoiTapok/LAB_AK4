@@ -63,6 +63,7 @@ def text2terms(text, i):
 
     terms = []
     while i< len(text):
+        print(text[i])
         val = text[i]
         if val in symbols():
             if val == "halt" or val == "not":
@@ -78,6 +79,7 @@ def text2terms(text, i):
                 # number_of_byte+=4
                 terms.append([val, text[i+1]])
                 i+=2
+            continue
         if val == ".org":
             terms.append([val, text[i + 1]])
             # number_of_byte += int(text[i + 1])
@@ -87,6 +89,8 @@ def text2terms(text, i):
             # labels[val[:-1]] = number_of_byte
             terms.append([val])
             i += 1
+            continue
+        assert 0, f"unexpected character: {val}"
     return terms
 
 
@@ -103,6 +107,12 @@ def int_to_bytes(integ):
     return first, second, third, fourth
 def byte_to_int(bytes):
     return int(bytes[0], 16) + int(bytes[1], 16)*2**8 + int(bytes[2], 16)*2**16 + int(bytes[3], 16)*2**24
+def int_to_chars(integ):
+    first = chr(integ%2**8)
+    second = chr(integ//2**8%2**8)
+    third = chr(integ//2**16%2**8)
+    fourth = chr(integ//2**24%2**8)
+    return first, second, third, fourth
 
 
 
