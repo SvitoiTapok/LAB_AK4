@@ -1,12 +1,11 @@
-#define out_num  2
-
-    .data ; разница между (1+...+100)^2 и 1^2+2^2+...+100^2
+; разница между (1+...+100)^2 и 1^2+2^2+...+100^2
+    .data
 sum_square: .num    0
 square_sum: .num    0
 const_100:  .num    100
 const_1:    .num    1
 cur_num:    .num    1
-out:        .num    out_num
+out:        .num    2
 
     .text
 _start:

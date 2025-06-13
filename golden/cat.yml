@@ -1,0 +1,483 @@
+in_code: |-
+  #def GET_STR_LEN 1; макроопределения
+  len_fetch:
+      input       in_1
+      mul         byt_count
+      add         %1 ;запись 4-х байного числа в переменную sym_count
+      write       %1
+      read        byt_count
+      sub         total_b_co
+      beq         loop
+      read        byt_count
+      mul         mult
+      write       byt_count
+      jump        len_fetch
+  #enddef
+
+      .data
+  const_1:    .num    1
+  out_1:      .num    1
+  in_1:       .num    1 ;пусть передана паскаль строка
+  sym_count:  .num    0
+  mask:       .num    255
+  mult:       .num    256 ;константа для корректного парсинга чисел
+  byt_count:  .num    1
+  total_b_co: .num    16777216
+      .text
+  _start:
+      GET_STR_LEN sym_count
+  loop:
+      input       in_1
+      output      out_1
+      read        sym_count
+      sub         const_1
+      beq         end ;проверка на конец
+      write       sym_count
+      jump        loop
+  end:
+      halt
+
+
+in_stdin: cPavel
+
+out_code_hex: |-
+  0 - data - 01000000          const_1
+  4 - data - 01000000          out_1
+  8 - data - 01000000          in_1
+  12 - data - 00000000          sym_count
+  16 - data - ff000000          mask
+  20 - data - 00010000          mult
+  24 - data - 01000000          byt_count
+  28 - data - 00000001          total_b_co
+  32 - 0x0d 08000000 - input          len_fetch
+  37 - 0x05 18000000 - multiply
+  42 - 0x03 0c000000 - add
+  47 - 0x02 0c000000 - write
+  52 - 0x01 18000000 - read
+  57 - 0x04 1c000000 - subtract
+  62 - 0x08 57000000 - jump if equal
+  67 - 0x01 18000000 - read
+  72 - 0x05 14000000 - multiply
+  77 - 0x02 18000000 - write
+  82 - 0x0c 20000000 - jump
+  87 - 0x0d 08000000 - input          loop
+  92 - 0x0e 04000000 - output
+  97 - 0x01 0c000000 - read
+  102 - 0x04 00000000 - subtract
+  107 - 0x08 7a000000 - jump if equal
+  112 - 0x02 0c000000 - write
+  117 - 0x0c 57000000 - jump
+  122 - 0x12 - halt          end
+
+
+out_stdout: |
+  source LoC: 37 code instr: 20
+  ============================================================
+
+
+out_log: |-
+  DEBUG    root:machine.py:588 TICK:   0 MPC: 0 PC:  32 ADDR:   0 DATA_OP: 0 ACC: 0
+  DEBUG    root:machine.py:592 TICK:   1 MPC: 1 PC:  32 ADDR:  32 DATA_OP: 2061 ACC: 0
+  DEBUG    root:machine.py:592 TICK:   2 MPC: 85 PC:  33 ADDR:  32 DATA_OP: 2061 ACC: 0
+  DEBUG    root:machine.py:592 TICK:   3 MPC: 86 PC:  33 ADDR:  33 DATA_OP: 8 ACC: 0
+  DEBUG    root:machine.py:592 TICK:   4 MPC: 87 PC:  37 ADDR:   8 DATA_OP: 8 ACC: 0
+  DEBUG    root:machine.py:592 TICK:   5 MPC: 88 PC:  37 ADDR:   8 DATA_OP: 1 ACC: 0
+  DEBUG    root:machine.py:174 input: '\x05'
+  DEBUG    root:machine.py:592 TICK:   6 MPC: 89 PC:  37 ADDR:  37 DATA_OP: 1 ACC: 5
+  DEBUG    root:machine.py:592 TICK:   7 MPC: 90 PC:  37 ADDR:  37 DATA_OP: 6149 ACC: 5
+  DEBUG    root:machine.py:592 TICK:   8 MPC: 41 PC:  38 ADDR:  37 DATA_OP: 6149 ACC: 5
+  DEBUG    root:machine.py:592 TICK:   9 MPC: 42 PC:  38 ADDR:  38 DATA_OP: 24 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  10 MPC: 43 PC:  42 ADDR:  24 DATA_OP: 24 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  11 MPC: 44 PC:  42 ADDR:  24 DATA_OP: 1 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  12 MPC: 45 PC:  42 ADDR:  42 DATA_OP: 1 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  13 MPC: 46 PC:  42 ADDR:  42 DATA_OP: 3075 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  14 MPC: 29 PC:  43 ADDR:  42 DATA_OP: 3075 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  15 MPC: 30 PC:  43 ADDR:  43 DATA_OP: 12 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  16 MPC: 31 PC:  47 ADDR:  12 DATA_OP: 12 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  17 MPC: 32 PC:  47 ADDR:  12 DATA_OP: 0 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  18 MPC: 33 PC:  47 ADDR:  47 DATA_OP: 0 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  19 MPC: 34 PC:  47 ADDR:  47 DATA_OP: 3074 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  20 MPC: 11 PC:  48 ADDR:  47 DATA_OP: 3074 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  21 MPC: 12 PC:  48 ADDR:  48 DATA_OP: 12 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  22 MPC: 13 PC:  52 ADDR:  12 DATA_OP: 12 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  23 MPC: 14 PC:  52 ADDR:  52 DATA_OP: 6145 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  24 MPC: 5 PC:  53 ADDR:  52 DATA_OP: 6145 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  25 MPC: 6 PC:  53 ADDR:  53 DATA_OP: 24 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  26 MPC: 7 PC:  57 ADDR:  24 DATA_OP: 24 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  27 MPC: 8 PC:  57 ADDR:  24 DATA_OP: 1 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  28 MPC: 9 PC:  57 ADDR:  57 DATA_OP: 1 ACC: 1
+  DEBUG    root:machine.py:592 TICK:  29 MPC: 10 PC:  57 ADDR:  57 DATA_OP: 7172 ACC: 1
+  DEBUG    root:machine.py:592 TICK:  30 MPC: 35 PC:  58 ADDR:  57 DATA_OP: 7172 ACC: 1
+  DEBUG    root:machine.py:592 TICK:  31 MPC: 36 PC:  58 ADDR:  58 DATA_OP: 28 ACC: 1
+  DEBUG    root:machine.py:592 TICK:  32 MPC: 37 PC:  62 ADDR:  28 DATA_OP: 28 ACC: 1
+  DEBUG    root:machine.py:592 TICK:  33 MPC: 38 PC:  62 ADDR:  28 DATA_OP: 16777216 ACC: 1
+  DEBUG    root:machine.py:592 TICK:  34 MPC: 39 PC:  62 ADDR:  62 DATA_OP: 16777216 ACC: -16777215
+  DEBUG    root:machine.py:592 TICK:  35 MPC: 40 PC:  62 ADDR:  62 DATA_OP: 22280 ACC: -16777215
+  DEBUG    root:machine.py:592 TICK:  36 MPC: 65 PC:  63 ADDR:  62 DATA_OP: 22280 ACC: -16777215
+  DEBUG    root:machine.py:592 TICK:  37 MPC: 66 PC:  63 ADDR:  63 DATA_OP: 87 ACC: -16777215
+  DEBUG    root:machine.py:592 TICK:  38 MPC: 67 PC:  67 ADDR:  63 DATA_OP: 87 ACC: -16777215
+  DEBUG    root:machine.py:592 TICK:  39 MPC: 68 PC:  67 ADDR:  67 DATA_OP: 6145 ACC: -16777215
+  DEBUG    root:machine.py:592 TICK:  40 MPC: 5 PC:  68 ADDR:  67 DATA_OP: 6145 ACC: -16777215
+  DEBUG    root:machine.py:592 TICK:  41 MPC: 6 PC:  68 ADDR:  68 DATA_OP: 24 ACC: -16777215
+  DEBUG    root:machine.py:592 TICK:  42 MPC: 7 PC:  72 ADDR:  24 DATA_OP: 24 ACC: -16777215
+  DEBUG    root:machine.py:592 TICK:  43 MPC: 8 PC:  72 ADDR:  24 DATA_OP: 1 ACC: -16777215
+  DEBUG    root:machine.py:592 TICK:  44 MPC: 9 PC:  72 ADDR:  72 DATA_OP: 1 ACC: 1
+  DEBUG    root:machine.py:592 TICK:  45 MPC: 10 PC:  72 ADDR:  72 DATA_OP: 5125 ACC: 1
+  DEBUG    root:machine.py:592 TICK:  46 MPC: 41 PC:  73 ADDR:  72 DATA_OP: 5125 ACC: 1
+  DEBUG    root:machine.py:592 TICK:  47 MPC: 42 PC:  73 ADDR:  73 DATA_OP: 20 ACC: 1
+  DEBUG    root:machine.py:592 TICK:  48 MPC: 43 PC:  77 ADDR:  20 DATA_OP: 20 ACC: 1
+  DEBUG    root:machine.py:592 TICK:  49 MPC: 44 PC:  77 ADDR:  20 DATA_OP: 256 ACC: 1
+  DEBUG    root:machine.py:592 TICK:  50 MPC: 45 PC:  77 ADDR:  77 DATA_OP: 256 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  51 MPC: 46 PC:  77 ADDR:  77 DATA_OP: 6146 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  52 MPC: 11 PC:  78 ADDR:  77 DATA_OP: 6146 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  53 MPC: 12 PC:  78 ADDR:  78 DATA_OP: 24 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  54 MPC: 13 PC:  82 ADDR:  24 DATA_OP: 24 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  55 MPC: 14 PC:  82 ADDR:  82 DATA_OP: 8204 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  56 MPC: 81 PC:  83 ADDR:  82 DATA_OP: 8204 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  57 MPC: 82 PC:  83 ADDR:  83 DATA_OP: 32 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  58 MPC: 83 PC:  32 ADDR:  83 DATA_OP: 32 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  59 MPC: 84 PC:  32 ADDR:  32 DATA_OP: 2061 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  60 MPC: 85 PC:  33 ADDR:  32 DATA_OP: 2061 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  61 MPC: 86 PC:  33 ADDR:  33 DATA_OP: 8 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  62 MPC: 87 PC:  37 ADDR:   8 DATA_OP: 8 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  63 MPC: 88 PC:  37 ADDR:   8 DATA_OP: 1 ACC: 256
+  DEBUG    root:machine.py:174 input: '\x00'
+  DEBUG    root:machine.py:592 TICK:  64 MPC: 89 PC:  37 ADDR:  37 DATA_OP: 1 ACC: 0
+  DEBUG    root:machine.py:592 TICK:  65 MPC: 90 PC:  37 ADDR:  37 DATA_OP: 6149 ACC: 0
+  DEBUG    root:machine.py:592 TICK:  66 MPC: 41 PC:  38 ADDR:  37 DATA_OP: 6149 ACC: 0
+  DEBUG    root:machine.py:592 TICK:  67 MPC: 42 PC:  38 ADDR:  38 DATA_OP: 24 ACC: 0
+  DEBUG    root:machine.py:592 TICK:  68 MPC: 43 PC:  42 ADDR:  24 DATA_OP: 24 ACC: 0
+  DEBUG    root:machine.py:592 TICK:  69 MPC: 44 PC:  42 ADDR:  24 DATA_OP: 256 ACC: 0
+  DEBUG    root:machine.py:592 TICK:  70 MPC: 45 PC:  42 ADDR:  42 DATA_OP: 256 ACC: 0
+  DEBUG    root:machine.py:592 TICK:  71 MPC: 46 PC:  42 ADDR:  42 DATA_OP: 3075 ACC: 0
+  DEBUG    root:machine.py:592 TICK:  72 MPC: 29 PC:  43 ADDR:  42 DATA_OP: 3075 ACC: 0
+  DEBUG    root:machine.py:592 TICK:  73 MPC: 30 PC:  43 ADDR:  43 DATA_OP: 12 ACC: 0
+  DEBUG    root:machine.py:592 TICK:  74 MPC: 31 PC:  47 ADDR:  12 DATA_OP: 12 ACC: 0
+  DEBUG    root:machine.py:592 TICK:  75 MPC: 32 PC:  47 ADDR:  12 DATA_OP: 5 ACC: 0
+  DEBUG    root:machine.py:592 TICK:  76 MPC: 33 PC:  47 ADDR:  47 DATA_OP: 5 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  77 MPC: 34 PC:  47 ADDR:  47 DATA_OP: 3074 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  78 MPC: 11 PC:  48 ADDR:  47 DATA_OP: 3074 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  79 MPC: 12 PC:  48 ADDR:  48 DATA_OP: 12 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  80 MPC: 13 PC:  52 ADDR:  12 DATA_OP: 12 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  81 MPC: 14 PC:  52 ADDR:  52 DATA_OP: 6145 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  82 MPC: 5 PC:  53 ADDR:  52 DATA_OP: 6145 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  83 MPC: 6 PC:  53 ADDR:  53 DATA_OP: 24 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  84 MPC: 7 PC:  57 ADDR:  24 DATA_OP: 24 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  85 MPC: 8 PC:  57 ADDR:  24 DATA_OP: 256 ACC: 5
+  DEBUG    root:machine.py:592 TICK:  86 MPC: 9 PC:  57 ADDR:  57 DATA_OP: 256 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  87 MPC: 10 PC:  57 ADDR:  57 DATA_OP: 7172 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  88 MPC: 35 PC:  58 ADDR:  57 DATA_OP: 7172 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  89 MPC: 36 PC:  58 ADDR:  58 DATA_OP: 28 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  90 MPC: 37 PC:  62 ADDR:  28 DATA_OP: 28 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  91 MPC: 38 PC:  62 ADDR:  28 DATA_OP: 16777216 ACC: 256
+  DEBUG    root:machine.py:592 TICK:  92 MPC: 39 PC:  62 ADDR:  62 DATA_OP: 16777216 ACC: -16776960
+  DEBUG    root:machine.py:592 TICK:  93 MPC: 40 PC:  62 ADDR:  62 DATA_OP: 22280 ACC: -16776960
+  DEBUG    root:machine.py:592 TICK:  94 MPC: 65 PC:  63 ADDR:  62 DATA_OP: 22280 ACC: -16776960
+  DEBUG    root:machine.py:592 TICK:  95 MPC: 66 PC:  63 ADDR:  63 DATA_OP: 87 ACC: -16776960
+  DEBUG    root:machine.py:592 TICK:  96 MPC: 67 PC:  67 ADDR:  63 DATA_OP: 87 ACC: -16776960
+  DEBUG    root:machine.py:592 TICK:  97 MPC: 68 PC:  67 ADDR:  67 DATA_OP: 6145 ACC: -16776960
+  DEBUG    root:machine.py:592 TICK:  98 MPC: 5 PC:  68 ADDR:  67 DATA_OP: 6145 ACC: -16776960
+  DEBUG    root:machine.py:592 TICK:  99 MPC: 6 PC:  68 ADDR:  68 DATA_OP: 24 ACC: -16776960
+  DEBUG    root:machine.py:592 TICK: 100 MPC: 7 PC:  72 ADDR:  24 DATA_OP: 24 ACC: -16776960
+  DEBUG    root:machine.py:592 TICK: 101 MPC: 8 PC:  72 ADDR:  24 DATA_OP: 256 ACC: -16776960
+  DEBUG    root:machine.py:592 TICK: 102 MPC: 9 PC:  72 ADDR:  72 DATA_OP: 256 ACC: 256
+  DEBUG    root:machine.py:592 TICK: 103 MPC: 10 PC:  72 ADDR:  72 DATA_OP: 5125 ACC: 256
+  DEBUG    root:machine.py:592 TICK: 104 MPC: 41 PC:  73 ADDR:  72 DATA_OP: 5125 ACC: 256
+  DEBUG    root:machine.py:592 TICK: 105 MPC: 42 PC:  73 ADDR:  73 DATA_OP: 20 ACC: 256
+  DEBUG    root:machine.py:592 TICK: 106 MPC: 43 PC:  77 ADDR:  20 DATA_OP: 20 ACC: 256
+  DEBUG    root:machine.py:592 TICK: 107 MPC: 44 PC:  77 ADDR:  20 DATA_OP: 256 ACC: 256
+  DEBUG    root:machine.py:592 TICK: 108 MPC: 45 PC:  77 ADDR:  77 DATA_OP: 256 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 109 MPC: 46 PC:  77 ADDR:  77 DATA_OP: 6146 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 110 MPC: 11 PC:  78 ADDR:  77 DATA_OP: 6146 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 111 MPC: 12 PC:  78 ADDR:  78 DATA_OP: 24 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 112 MPC: 13 PC:  82 ADDR:  24 DATA_OP: 24 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 113 MPC: 14 PC:  82 ADDR:  82 DATA_OP: 8204 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 114 MPC: 81 PC:  83 ADDR:  82 DATA_OP: 8204 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 115 MPC: 82 PC:  83 ADDR:  83 DATA_OP: 32 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 116 MPC: 83 PC:  32 ADDR:  83 DATA_OP: 32 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 117 MPC: 84 PC:  32 ADDR:  32 DATA_OP: 2061 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 118 MPC: 85 PC:  33 ADDR:  32 DATA_OP: 2061 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 119 MPC: 86 PC:  33 ADDR:  33 DATA_OP: 8 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 120 MPC: 87 PC:  37 ADDR:   8 DATA_OP: 8 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 121 MPC: 88 PC:  37 ADDR:   8 DATA_OP: 1 ACC: 65536
+  DEBUG    root:machine.py:174 input: '\x00'
+  DEBUG    root:machine.py:592 TICK: 122 MPC: 89 PC:  37 ADDR:  37 DATA_OP: 1 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 123 MPC: 90 PC:  37 ADDR:  37 DATA_OP: 6149 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 124 MPC: 41 PC:  38 ADDR:  37 DATA_OP: 6149 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 125 MPC: 42 PC:  38 ADDR:  38 DATA_OP: 24 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 126 MPC: 43 PC:  42 ADDR:  24 DATA_OP: 24 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 127 MPC: 44 PC:  42 ADDR:  24 DATA_OP: 65536 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 128 MPC: 45 PC:  42 ADDR:  42 DATA_OP: 65536 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 129 MPC: 46 PC:  42 ADDR:  42 DATA_OP: 3075 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 130 MPC: 29 PC:  43 ADDR:  42 DATA_OP: 3075 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 131 MPC: 30 PC:  43 ADDR:  43 DATA_OP: 12 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 132 MPC: 31 PC:  47 ADDR:  12 DATA_OP: 12 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 133 MPC: 32 PC:  47 ADDR:  12 DATA_OP: 5 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 134 MPC: 33 PC:  47 ADDR:  47 DATA_OP: 5 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 135 MPC: 34 PC:  47 ADDR:  47 DATA_OP: 3074 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 136 MPC: 11 PC:  48 ADDR:  47 DATA_OP: 3074 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 137 MPC: 12 PC:  48 ADDR:  48 DATA_OP: 12 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 138 MPC: 13 PC:  52 ADDR:  12 DATA_OP: 12 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 139 MPC: 14 PC:  52 ADDR:  52 DATA_OP: 6145 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 140 MPC: 5 PC:  53 ADDR:  52 DATA_OP: 6145 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 141 MPC: 6 PC:  53 ADDR:  53 DATA_OP: 24 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 142 MPC: 7 PC:  57 ADDR:  24 DATA_OP: 24 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 143 MPC: 8 PC:  57 ADDR:  24 DATA_OP: 65536 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 144 MPC: 9 PC:  57 ADDR:  57 DATA_OP: 65536 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 145 MPC: 10 PC:  57 ADDR:  57 DATA_OP: 7172 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 146 MPC: 35 PC:  58 ADDR:  57 DATA_OP: 7172 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 147 MPC: 36 PC:  58 ADDR:  58 DATA_OP: 28 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 148 MPC: 37 PC:  62 ADDR:  28 DATA_OP: 28 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 149 MPC: 38 PC:  62 ADDR:  28 DATA_OP: 16777216 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 150 MPC: 39 PC:  62 ADDR:  62 DATA_OP: 16777216 ACC: -16711680
+  DEBUG    root:machine.py:592 TICK: 151 MPC: 40 PC:  62 ADDR:  62 DATA_OP: 22280 ACC: -16711680
+  DEBUG    root:machine.py:592 TICK: 152 MPC: 65 PC:  63 ADDR:  62 DATA_OP: 22280 ACC: -16711680
+  DEBUG    root:machine.py:592 TICK: 153 MPC: 66 PC:  63 ADDR:  63 DATA_OP: 87 ACC: -16711680
+  DEBUG    root:machine.py:592 TICK: 154 MPC: 67 PC:  67 ADDR:  63 DATA_OP: 87 ACC: -16711680
+  DEBUG    root:machine.py:592 TICK: 155 MPC: 68 PC:  67 ADDR:  67 DATA_OP: 6145 ACC: -16711680
+  DEBUG    root:machine.py:592 TICK: 156 MPC: 5 PC:  68 ADDR:  67 DATA_OP: 6145 ACC: -16711680
+  DEBUG    root:machine.py:592 TICK: 157 MPC: 6 PC:  68 ADDR:  68 DATA_OP: 24 ACC: -16711680
+  DEBUG    root:machine.py:592 TICK: 158 MPC: 7 PC:  72 ADDR:  24 DATA_OP: 24 ACC: -16711680
+  DEBUG    root:machine.py:592 TICK: 159 MPC: 8 PC:  72 ADDR:  24 DATA_OP: 65536 ACC: -16711680
+  DEBUG    root:machine.py:592 TICK: 160 MPC: 9 PC:  72 ADDR:  72 DATA_OP: 65536 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 161 MPC: 10 PC:  72 ADDR:  72 DATA_OP: 5125 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 162 MPC: 41 PC:  73 ADDR:  72 DATA_OP: 5125 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 163 MPC: 42 PC:  73 ADDR:  73 DATA_OP: 20 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 164 MPC: 43 PC:  77 ADDR:  20 DATA_OP: 20 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 165 MPC: 44 PC:  77 ADDR:  20 DATA_OP: 256 ACC: 65536
+  DEBUG    root:machine.py:592 TICK: 166 MPC: 45 PC:  77 ADDR:  77 DATA_OP: 256 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 167 MPC: 46 PC:  77 ADDR:  77 DATA_OP: 6146 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 168 MPC: 11 PC:  78 ADDR:  77 DATA_OP: 6146 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 169 MPC: 12 PC:  78 ADDR:  78 DATA_OP: 24 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 170 MPC: 13 PC:  82 ADDR:  24 DATA_OP: 24 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 171 MPC: 14 PC:  82 ADDR:  82 DATA_OP: 8204 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 172 MPC: 81 PC:  83 ADDR:  82 DATA_OP: 8204 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 173 MPC: 82 PC:  83 ADDR:  83 DATA_OP: 32 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 174 MPC: 83 PC:  32 ADDR:  83 DATA_OP: 32 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 175 MPC: 84 PC:  32 ADDR:  32 DATA_OP: 2061 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 176 MPC: 85 PC:  33 ADDR:  32 DATA_OP: 2061 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 177 MPC: 86 PC:  33 ADDR:  33 DATA_OP: 8 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 178 MPC: 87 PC:  37 ADDR:   8 DATA_OP: 8 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 179 MPC: 88 PC:  37 ADDR:   8 DATA_OP: 1 ACC: 16777216
+  DEBUG    root:machine.py:174 input: '\x00'
+  DEBUG    root:machine.py:592 TICK: 180 MPC: 89 PC:  37 ADDR:  37 DATA_OP: 1 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 181 MPC: 90 PC:  37 ADDR:  37 DATA_OP: 6149 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 182 MPC: 41 PC:  38 ADDR:  37 DATA_OP: 6149 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 183 MPC: 42 PC:  38 ADDR:  38 DATA_OP: 24 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 184 MPC: 43 PC:  42 ADDR:  24 DATA_OP: 24 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 185 MPC: 44 PC:  42 ADDR:  24 DATA_OP: 16777216 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 186 MPC: 45 PC:  42 ADDR:  42 DATA_OP: 16777216 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 187 MPC: 46 PC:  42 ADDR:  42 DATA_OP: 3075 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 188 MPC: 29 PC:  43 ADDR:  42 DATA_OP: 3075 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 189 MPC: 30 PC:  43 ADDR:  43 DATA_OP: 12 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 190 MPC: 31 PC:  47 ADDR:  12 DATA_OP: 12 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 191 MPC: 32 PC:  47 ADDR:  12 DATA_OP: 5 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 192 MPC: 33 PC:  47 ADDR:  47 DATA_OP: 5 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 193 MPC: 34 PC:  47 ADDR:  47 DATA_OP: 3074 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 194 MPC: 11 PC:  48 ADDR:  47 DATA_OP: 3074 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 195 MPC: 12 PC:  48 ADDR:  48 DATA_OP: 12 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 196 MPC: 13 PC:  52 ADDR:  12 DATA_OP: 12 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 197 MPC: 14 PC:  52 ADDR:  52 DATA_OP: 6145 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 198 MPC: 5 PC:  53 ADDR:  52 DATA_OP: 6145 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 199 MPC: 6 PC:  53 ADDR:  53 DATA_OP: 24 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 200 MPC: 7 PC:  57 ADDR:  24 DATA_OP: 24 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 201 MPC: 8 PC:  57 ADDR:  24 DATA_OP: 16777216 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 202 MPC: 9 PC:  57 ADDR:  57 DATA_OP: 16777216 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 203 MPC: 10 PC:  57 ADDR:  57 DATA_OP: 7172 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 204 MPC: 35 PC:  58 ADDR:  57 DATA_OP: 7172 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 205 MPC: 36 PC:  58 ADDR:  58 DATA_OP: 28 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 206 MPC: 37 PC:  62 ADDR:  28 DATA_OP: 28 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 207 MPC: 38 PC:  62 ADDR:  28 DATA_OP: 16777216 ACC: 16777216
+  DEBUG    root:machine.py:592 TICK: 208 MPC: 39 PC:  62 ADDR:  62 DATA_OP: 16777216 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 209 MPC: 40 PC:  62 ADDR:  62 DATA_OP: 22280 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 210 MPC: 65 PC:  63 ADDR:  62 DATA_OP: 22280 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 211 MPC: 66 PC:  63 ADDR:  63 DATA_OP: 87 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 212 MPC: 67 PC:  87 ADDR:  63 DATA_OP: 87 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 213 MPC: 68 PC:  87 ADDR:  87 DATA_OP: 2061 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 214 MPC: 85 PC:  88 ADDR:  87 DATA_OP: 2061 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 215 MPC: 86 PC:  88 ADDR:  88 DATA_OP: 8 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 216 MPC: 87 PC:  92 ADDR:   8 DATA_OP: 8 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 217 MPC: 88 PC:  92 ADDR:   8 DATA_OP: 1 ACC: 0
+  DEBUG    root:machine.py:174 input: 'P'
+  DEBUG    root:machine.py:592 TICK: 218 MPC: 89 PC:  92 ADDR:  92 DATA_OP: 1 ACC: 80
+  DEBUG    root:machine.py:592 TICK: 219 MPC: 90 PC:  92 ADDR:  92 DATA_OP: 1038 ACC: 80
+  DEBUG    root:machine.py:592 TICK: 220 MPC: 91 PC:  93 ADDR:  92 DATA_OP: 1038 ACC: 80
+  DEBUG    root:machine.py:592 TICK: 221 MPC: 92 PC:  93 ADDR:  93 DATA_OP: 4 ACC: 80
+  DEBUG    root:machine.py:592 TICK: 222 MPC: 93 PC:  97 ADDR:   4 DATA_OP: 4 ACC: 80
+  DEBUG    root:machine.py:592 TICK: 223 MPC: 94 PC:  97 ADDR:   4 DATA_OP: 1 ACC: 80
+  DEBUG    root:machine.py:205 output1: '' << P
+  DEBUG    root:machine.py:592 TICK: 224 MPC: 95 PC:  97 ADDR:  97 DATA_OP: 1 ACC: 80
+  DEBUG    root:machine.py:592 TICK: 225 MPC: 96 PC:  97 ADDR:  97 DATA_OP: 3073 ACC: 80
+  DEBUG    root:machine.py:592 TICK: 226 MPC: 5 PC:  98 ADDR:  97 DATA_OP: 3073 ACC: 80
+  DEBUG    root:machine.py:592 TICK: 227 MPC: 6 PC:  98 ADDR:  98 DATA_OP: 12 ACC: 80
+  DEBUG    root:machine.py:592 TICK: 228 MPC: 7 PC: 102 ADDR:  12 DATA_OP: 12 ACC: 80
+  DEBUG    root:machine.py:592 TICK: 229 MPC: 8 PC: 102 ADDR:  12 DATA_OP: 5 ACC: 80
+  DEBUG    root:machine.py:592 TICK: 230 MPC: 9 PC: 102 ADDR: 102 DATA_OP: 5 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 231 MPC: 10 PC: 102 ADDR: 102 DATA_OP: 4 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 232 MPC: 35 PC: 103 ADDR: 102 DATA_OP: 4 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 233 MPC: 36 PC: 103 ADDR: 103 DATA_OP: 0 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 234 MPC: 37 PC: 107 ADDR:   0 DATA_OP: 0 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 235 MPC: 38 PC: 107 ADDR:   0 DATA_OP: 1 ACC: 5
+  DEBUG    root:machine.py:592 TICK: 236 MPC: 39 PC: 107 ADDR: 107 DATA_OP: 1 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 237 MPC: 40 PC: 107 ADDR: 107 DATA_OP: 31240 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 238 MPC: 65 PC: 108 ADDR: 107 DATA_OP: 31240 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 239 MPC: 66 PC: 108 ADDR: 108 DATA_OP: 122 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 240 MPC: 67 PC: 112 ADDR: 108 DATA_OP: 122 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 241 MPC: 68 PC: 112 ADDR: 112 DATA_OP: 3074 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 242 MPC: 11 PC: 113 ADDR: 112 DATA_OP: 3074 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 243 MPC: 12 PC: 113 ADDR: 113 DATA_OP: 12 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 244 MPC: 13 PC: 117 ADDR:  12 DATA_OP: 12 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 245 MPC: 14 PC: 117 ADDR: 117 DATA_OP: 22284 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 246 MPC: 81 PC: 118 ADDR: 117 DATA_OP: 22284 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 247 MPC: 82 PC: 118 ADDR: 118 DATA_OP: 87 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 248 MPC: 83 PC:  87 ADDR: 118 DATA_OP: 87 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 249 MPC: 84 PC:  87 ADDR:  87 DATA_OP: 2061 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 250 MPC: 85 PC:  88 ADDR:  87 DATA_OP: 2061 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 251 MPC: 86 PC:  88 ADDR:  88 DATA_OP: 8 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 252 MPC: 87 PC:  92 ADDR:   8 DATA_OP: 8 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 253 MPC: 88 PC:  92 ADDR:   8 DATA_OP: 1 ACC: 4
+  DEBUG    root:machine.py:174 input: 'a'
+  DEBUG    root:machine.py:592 TICK: 254 MPC: 89 PC:  92 ADDR:  92 DATA_OP: 1 ACC: 97
+  DEBUG    root:machine.py:592 TICK: 255 MPC: 90 PC:  92 ADDR:  92 DATA_OP: 1038 ACC: 97
+  DEBUG    root:machine.py:592 TICK: 256 MPC: 91 PC:  93 ADDR:  92 DATA_OP: 1038 ACC: 97
+  DEBUG    root:machine.py:592 TICK: 257 MPC: 92 PC:  93 ADDR:  93 DATA_OP: 4 ACC: 97
+  DEBUG    root:machine.py:592 TICK: 258 MPC: 93 PC:  97 ADDR:   4 DATA_OP: 4 ACC: 97
+  DEBUG    root:machine.py:592 TICK: 259 MPC: 94 PC:  97 ADDR:   4 DATA_OP: 1 ACC: 97
+  DEBUG    root:machine.py:205 output1: 'P' << a
+  DEBUG    root:machine.py:592 TICK: 260 MPC: 95 PC:  97 ADDR:  97 DATA_OP: 1 ACC: 97
+  DEBUG    root:machine.py:592 TICK: 261 MPC: 96 PC:  97 ADDR:  97 DATA_OP: 3073 ACC: 97
+  DEBUG    root:machine.py:592 TICK: 262 MPC: 5 PC:  98 ADDR:  97 DATA_OP: 3073 ACC: 97
+  DEBUG    root:machine.py:592 TICK: 263 MPC: 6 PC:  98 ADDR:  98 DATA_OP: 12 ACC: 97
+  DEBUG    root:machine.py:592 TICK: 264 MPC: 7 PC: 102 ADDR:  12 DATA_OP: 12 ACC: 97
+  DEBUG    root:machine.py:592 TICK: 265 MPC: 8 PC: 102 ADDR:  12 DATA_OP: 4 ACC: 97
+  DEBUG    root:machine.py:592 TICK: 266 MPC: 9 PC: 102 ADDR: 102 DATA_OP: 4 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 267 MPC: 10 PC: 102 ADDR: 102 DATA_OP: 4 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 268 MPC: 35 PC: 103 ADDR: 102 DATA_OP: 4 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 269 MPC: 36 PC: 103 ADDR: 103 DATA_OP: 0 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 270 MPC: 37 PC: 107 ADDR:   0 DATA_OP: 0 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 271 MPC: 38 PC: 107 ADDR:   0 DATA_OP: 1 ACC: 4
+  DEBUG    root:machine.py:592 TICK: 272 MPC: 39 PC: 107 ADDR: 107 DATA_OP: 1 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 273 MPC: 40 PC: 107 ADDR: 107 DATA_OP: 31240 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 274 MPC: 65 PC: 108 ADDR: 107 DATA_OP: 31240 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 275 MPC: 66 PC: 108 ADDR: 108 DATA_OP: 122 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 276 MPC: 67 PC: 112 ADDR: 108 DATA_OP: 122 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 277 MPC: 68 PC: 112 ADDR: 112 DATA_OP: 3074 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 278 MPC: 11 PC: 113 ADDR: 112 DATA_OP: 3074 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 279 MPC: 12 PC: 113 ADDR: 113 DATA_OP: 12 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 280 MPC: 13 PC: 117 ADDR:  12 DATA_OP: 12 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 281 MPC: 14 PC: 117 ADDR: 117 DATA_OP: 22284 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 282 MPC: 81 PC: 118 ADDR: 117 DATA_OP: 22284 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 283 MPC: 82 PC: 118 ADDR: 118 DATA_OP: 87 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 284 MPC: 83 PC:  87 ADDR: 118 DATA_OP: 87 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 285 MPC: 84 PC:  87 ADDR:  87 DATA_OP: 2061 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 286 MPC: 85 PC:  88 ADDR:  87 DATA_OP: 2061 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 287 MPC: 86 PC:  88 ADDR:  88 DATA_OP: 8 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 288 MPC: 87 PC:  92 ADDR:   8 DATA_OP: 8 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 289 MPC: 88 PC:  92 ADDR:   8 DATA_OP: 1 ACC: 3
+  DEBUG    root:machine.py:174 input: 'v'
+  DEBUG    root:machine.py:592 TICK: 290 MPC: 89 PC:  92 ADDR:  92 DATA_OP: 1 ACC: 118
+  DEBUG    root:machine.py:592 TICK: 291 MPC: 90 PC:  92 ADDR:  92 DATA_OP: 1038 ACC: 118
+  DEBUG    root:machine.py:592 TICK: 292 MPC: 91 PC:  93 ADDR:  92 DATA_OP: 1038 ACC: 118
+  DEBUG    root:machine.py:592 TICK: 293 MPC: 92 PC:  93 ADDR:  93 DATA_OP: 4 ACC: 118
+  DEBUG    root:machine.py:592 TICK: 294 MPC: 93 PC:  97 ADDR:   4 DATA_OP: 4 ACC: 118
+  DEBUG    root:machine.py:592 TICK: 295 MPC: 94 PC:  97 ADDR:   4 DATA_OP: 1 ACC: 118
+  DEBUG    root:machine.py:205 output1: 'Pa' << v
+  DEBUG    root:machine.py:592 TICK: 296 MPC: 95 PC:  97 ADDR:  97 DATA_OP: 1 ACC: 118
+  DEBUG    root:machine.py:592 TICK: 297 MPC: 96 PC:  97 ADDR:  97 DATA_OP: 3073 ACC: 118
+  DEBUG    root:machine.py:592 TICK: 298 MPC: 5 PC:  98 ADDR:  97 DATA_OP: 3073 ACC: 118
+  DEBUG    root:machine.py:592 TICK: 299 MPC: 6 PC:  98 ADDR:  98 DATA_OP: 12 ACC: 118
+  DEBUG    root:machine.py:592 TICK: 300 MPC: 7 PC: 102 ADDR:  12 DATA_OP: 12 ACC: 118
+  DEBUG    root:machine.py:592 TICK: 301 MPC: 8 PC: 102 ADDR:  12 DATA_OP: 3 ACC: 118
+  DEBUG    root:machine.py:592 TICK: 302 MPC: 9 PC: 102 ADDR: 102 DATA_OP: 3 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 303 MPC: 10 PC: 102 ADDR: 102 DATA_OP: 4 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 304 MPC: 35 PC: 103 ADDR: 102 DATA_OP: 4 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 305 MPC: 36 PC: 103 ADDR: 103 DATA_OP: 0 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 306 MPC: 37 PC: 107 ADDR:   0 DATA_OP: 0 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 307 MPC: 38 PC: 107 ADDR:   0 DATA_OP: 1 ACC: 3
+  DEBUG    root:machine.py:592 TICK: 308 MPC: 39 PC: 107 ADDR: 107 DATA_OP: 1 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 309 MPC: 40 PC: 107 ADDR: 107 DATA_OP: 31240 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 310 MPC: 65 PC: 108 ADDR: 107 DATA_OP: 31240 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 311 MPC: 66 PC: 108 ADDR: 108 DATA_OP: 122 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 312 MPC: 67 PC: 112 ADDR: 108 DATA_OP: 122 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 313 MPC: 68 PC: 112 ADDR: 112 DATA_OP: 3074 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 314 MPC: 11 PC: 113 ADDR: 112 DATA_OP: 3074 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 315 MPC: 12 PC: 113 ADDR: 113 DATA_OP: 12 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 316 MPC: 13 PC: 117 ADDR:  12 DATA_OP: 12 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 317 MPC: 14 PC: 117 ADDR: 117 DATA_OP: 22284 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 318 MPC: 81 PC: 118 ADDR: 117 DATA_OP: 22284 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 319 MPC: 82 PC: 118 ADDR: 118 DATA_OP: 87 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 320 MPC: 83 PC:  87 ADDR: 118 DATA_OP: 87 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 321 MPC: 84 PC:  87 ADDR:  87 DATA_OP: 2061 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 322 MPC: 85 PC:  88 ADDR:  87 DATA_OP: 2061 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 323 MPC: 86 PC:  88 ADDR:  88 DATA_OP: 8 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 324 MPC: 87 PC:  92 ADDR:   8 DATA_OP: 8 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 325 MPC: 88 PC:  92 ADDR:   8 DATA_OP: 1 ACC: 2
+  DEBUG    root:machine.py:174 input: 'e'
+  DEBUG    root:machine.py:592 TICK: 326 MPC: 89 PC:  92 ADDR:  92 DATA_OP: 1 ACC: 101
+  DEBUG    root:machine.py:592 TICK: 327 MPC: 90 PC:  92 ADDR:  92 DATA_OP: 1038 ACC: 101
+  DEBUG    root:machine.py:592 TICK: 328 MPC: 91 PC:  93 ADDR:  92 DATA_OP: 1038 ACC: 101
+  DEBUG    root:machine.py:592 TICK: 329 MPC: 92 PC:  93 ADDR:  93 DATA_OP: 4 ACC: 101
+  DEBUG    root:machine.py:592 TICK: 330 MPC: 93 PC:  97 ADDR:   4 DATA_OP: 4 ACC: 101
+  DEBUG    root:machine.py:592 TICK: 331 MPC: 94 PC:  97 ADDR:   4 DATA_OP: 1 ACC: 101
+  DEBUG    root:machine.py:205 output1: 'Pav' << e
+  DEBUG    root:machine.py:592 TICK: 332 MPC: 95 PC:  97 ADDR:  97 DATA_OP: 1 ACC: 101
+  DEBUG    root:machine.py:592 TICK: 333 MPC: 96 PC:  97 ADDR:  97 DATA_OP: 3073 ACC: 101
+  DEBUG    root:machine.py:592 TICK: 334 MPC: 5 PC:  98 ADDR:  97 DATA_OP: 3073 ACC: 101
+  DEBUG    root:machine.py:592 TICK: 335 MPC: 6 PC:  98 ADDR:  98 DATA_OP: 12 ACC: 101
+  DEBUG    root:machine.py:592 TICK: 336 MPC: 7 PC: 102 ADDR:  12 DATA_OP: 12 ACC: 101
+  DEBUG    root:machine.py:592 TICK: 337 MPC: 8 PC: 102 ADDR:  12 DATA_OP: 2 ACC: 101
+  DEBUG    root:machine.py:592 TICK: 338 MPC: 9 PC: 102 ADDR: 102 DATA_OP: 2 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 339 MPC: 10 PC: 102 ADDR: 102 DATA_OP: 4 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 340 MPC: 35 PC: 103 ADDR: 102 DATA_OP: 4 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 341 MPC: 36 PC: 103 ADDR: 103 DATA_OP: 0 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 342 MPC: 37 PC: 107 ADDR:   0 DATA_OP: 0 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 343 MPC: 38 PC: 107 ADDR:   0 DATA_OP: 1 ACC: 2
+  DEBUG    root:machine.py:592 TICK: 344 MPC: 39 PC: 107 ADDR: 107 DATA_OP: 1 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 345 MPC: 40 PC: 107 ADDR: 107 DATA_OP: 31240 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 346 MPC: 65 PC: 108 ADDR: 107 DATA_OP: 31240 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 347 MPC: 66 PC: 108 ADDR: 108 DATA_OP: 122 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 348 MPC: 67 PC: 112 ADDR: 108 DATA_OP: 122 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 349 MPC: 68 PC: 112 ADDR: 112 DATA_OP: 3074 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 350 MPC: 11 PC: 113 ADDR: 112 DATA_OP: 3074 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 351 MPC: 12 PC: 113 ADDR: 113 DATA_OP: 12 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 352 MPC: 13 PC: 117 ADDR:  12 DATA_OP: 12 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 353 MPC: 14 PC: 117 ADDR: 117 DATA_OP: 22284 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 354 MPC: 81 PC: 118 ADDR: 117 DATA_OP: 22284 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 355 MPC: 82 PC: 118 ADDR: 118 DATA_OP: 87 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 356 MPC: 83 PC:  87 ADDR: 118 DATA_OP: 87 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 357 MPC: 84 PC:  87 ADDR:  87 DATA_OP: 2061 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 358 MPC: 85 PC:  88 ADDR:  87 DATA_OP: 2061 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 359 MPC: 86 PC:  88 ADDR:  88 DATA_OP: 8 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 360 MPC: 87 PC:  92 ADDR:   8 DATA_OP: 8 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 361 MPC: 88 PC:  92 ADDR:   8 DATA_OP: 1 ACC: 1
+  DEBUG    root:machine.py:174 input: 'l'
+  DEBUG    root:machine.py:592 TICK: 362 MPC: 89 PC:  92 ADDR:  92 DATA_OP: 1 ACC: 108
+  DEBUG    root:machine.py:592 TICK: 363 MPC: 90 PC:  92 ADDR:  92 DATA_OP: 1038 ACC: 108
+  DEBUG    root:machine.py:592 TICK: 364 MPC: 91 PC:  93 ADDR:  92 DATA_OP: 1038 ACC: 108
+  DEBUG    root:machine.py:592 TICK: 365 MPC: 92 PC:  93 ADDR:  93 DATA_OP: 4 ACC: 108
+  DEBUG    root:machine.py:592 TICK: 366 MPC: 93 PC:  97 ADDR:   4 DATA_OP: 4 ACC: 108
+  DEBUG    root:machine.py:592 TICK: 367 MPC: 94 PC:  97 ADDR:   4 DATA_OP: 1 ACC: 108
+  DEBUG    root:machine.py:205 output1: 'Pave' << l
+  DEBUG    root:machine.py:592 TICK: 368 MPC: 95 PC:  97 ADDR:  97 DATA_OP: 1 ACC: 108
+  DEBUG    root:machine.py:592 TICK: 369 MPC: 96 PC:  97 ADDR:  97 DATA_OP: 3073 ACC: 108
+  DEBUG    root:machine.py:592 TICK: 370 MPC: 5 PC:  98 ADDR:  97 DATA_OP: 3073 ACC: 108
+  DEBUG    root:machine.py:592 TICK: 371 MPC: 6 PC:  98 ADDR:  98 DATA_OP: 12 ACC: 108
+  DEBUG    root:machine.py:592 TICK: 372 MPC: 7 PC: 102 ADDR:  12 DATA_OP: 12 ACC: 108
+  DEBUG    root:machine.py:592 TICK: 373 MPC: 8 PC: 102 ADDR:  12 DATA_OP: 1 ACC: 108
+  DEBUG    root:machine.py:592 TICK: 374 MPC: 9 PC: 102 ADDR: 102 DATA_OP: 1 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 375 MPC: 10 PC: 102 ADDR: 102 DATA_OP: 4 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 376 MPC: 35 PC: 103 ADDR: 102 DATA_OP: 4 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 377 MPC: 36 PC: 103 ADDR: 103 DATA_OP: 0 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 378 MPC: 37 PC: 107 ADDR:   0 DATA_OP: 0 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 379 MPC: 38 PC: 107 ADDR:   0 DATA_OP: 1 ACC: 1
+  DEBUG    root:machine.py:592 TICK: 380 MPC: 39 PC: 107 ADDR: 107 DATA_OP: 1 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 381 MPC: 40 PC: 107 ADDR: 107 DATA_OP: 31240 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 382 MPC: 65 PC: 108 ADDR: 107 DATA_OP: 31240 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 383 MPC: 66 PC: 108 ADDR: 108 DATA_OP: 122 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 384 MPC: 67 PC: 122 ADDR: 108 DATA_OP: 122 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 385 MPC: 68 PC: 122 ADDR: 122 DATA_OP: 18 ACC: 0
+  DEBUG    root:machine.py:592 TICK: 386 MPC: 4 PC: 123 ADDR: 122 DATA_OP: 18 ACC: 0
+  INFO     root:machine.py:600 output_buffer1: 'Pavel'
+  INFO     root:machine.py:601 output_buffer2: ''
+  INFO     root:machine.py:602 general tick count: 386
+  EOF

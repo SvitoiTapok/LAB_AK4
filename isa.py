@@ -165,9 +165,7 @@ def to_hex(memory, text_ind, labels, data_ind):
     strin += f"          {curlab}"
     result.append(strin)
 
-    print(result)
     i=text_ind
-    print(text_ind)
     while i<len(binary_code):
         if binary_code[i]==0:
             i+=1

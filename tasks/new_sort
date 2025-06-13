@@ -1,13 +1,10 @@
-#define in_num 2
-#define out_num 2
-
     .data
     .org 10000 ; -> максимальная длина передаваемого массива - 2500 32-битных чисел
 
 const_4:    .num    4
 const_1:    .num    1
-out:        .num    out_num
-in:         .num    in_num ;пусть передана паскаль строка
+out:        .num    2 ; IO для чисел
+in:         .num    2
 
 count:      .num    0;  общее количество элементов
 el_count:   .num    0;  количество обработанных элементов

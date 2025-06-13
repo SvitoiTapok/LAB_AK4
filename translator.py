@@ -64,7 +64,6 @@ def text2terms(text, i):
 
     terms = []
     while i< len(text):
-        print(text[i])
         val = text[i]
         if val in symbols():
             if val == "halt" or val == "not":
@@ -122,6 +121,9 @@ def translate(text):
     global labels
     global memory
     global number_of_byte
+    memory = [0] * 2 ** 16
+    labels = {}
+    number_of_byte = 0
     """Трансляция текста программы в машинный код.
 
     Выполняется в два этапа:
@@ -137,27 +139,33 @@ def translate(text):
     `isa.Opcode`.
 
     """
+
+
+
     text = re.sub(r';.*$', '', text, flags=re.MULTILINE)
     text = shlex.split(text, posix=False)
     i=0
     #макроопределения
 
-    while "#define" in text:
-        ind = text.index("#define")
+    while "#def" in text:
+        ind = text.index("#def")
+        end = text.index("#enddef")
         define_target = text[ind+1]
-        define_new_value = text[ind+2]
-        new_text = text[:text.index("#define")] + text[text.index("#define")+3:]
-        text = ' '.join(new_text).replace(define_target, define_new_value).split()
-
-
-    #потом подправить
+        define_number_of_values = int(text[ind+2])
+        define_value = ' '.join(text[ind+3:end])
+        text = text[:ind] + text[end+1:]
+        while define_target in text:
+            target_ind = text.index(define_target)
+            vals = []
+            while define_number_of_values:
+                vals.append(text[target_ind+1+len(vals)])
+                define_number_of_values -= 1
+            for val in range(len(vals)):
+                define_value = define_value.replace(f'%{val+1}', vals[val])
+            define_value = shlex.split(define_value, posix=False)
+            text = text[:target_ind] + define_value + text[target_ind+len(vals)+1:]
     data_ind = text.index(".data")
     text_ind = text.index(".text")
-    assert text_ind!=-1, "Не найдена область .text"
-    #обработка переменных
-    print("data:", data_ind)
-    print("text:", text_ind)
-    print(text)
 
 
     memory_data_ind = 0
@@ -185,9 +193,9 @@ def translate(text):
                 memory[number_of_byte] = hex(ord(char))
                 number_of_byte += 1
         ind += 3
-    assert not "_start" in labels, "Не найдена метка _start"
 
-    print(labels)
+
+
     i = text_ind+1
     terms = text2terms(text, i)
     memory_text_ind = number_of_byte
@@ -232,7 +240,7 @@ def translate(text):
                 number_of_byte += 4
         if val == ".org":
             number_of_byte += int(text[i + 1])
-
+    assert "_start" in labels, "Не найдена метка _start"
     code.append({"index": len(code), "opcode": Opcode.HALT})
     return code, memory_text_ind, memory_data_ind, labels.get("_start")
 

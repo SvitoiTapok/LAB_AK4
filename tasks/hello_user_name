@@ -1,3 +1,19 @@
+#def GET_STR_LEN 1
+len_fetch:
+    input       in_1
+    mul         byt_count
+    add         %1 ;запись 4-х байного числа в переменную sym_count
+    write       %1
+    read        byt_count
+    sub         total_b_co
+    beq         choose_message
+    read        byt_count
+    mul         mult
+    write       byt_count
+    jump        len_fetch
+#enddef
+
+
     .data
 message:    .byte   'What is your name?'
 mes_len:    .num    18
@@ -17,20 +33,11 @@ mult:       .num    256 ;константа для корректного пар
 byt_count:  .num    1
 total_b_co: .num    16777216
 
+
+
     .text
 _start:
-len_fetch:
-    input       in_1
-    mul         byt_count
-    add         sym_count ;запись 4-х байного числа в переменную sym_count
-    write       sym_count
-    read        byt_count
-    sub         total_b_co
-    beq         choose_message
-    read        byt_count
-    mul         mult
-    write       byt_count
-    jump        len_fetch
+    GET_STR_LEN sym_count
 
 default_message:
     read_ind    mes_addr
