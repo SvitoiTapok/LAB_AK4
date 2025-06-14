@@ -1,4 +1,4 @@
-name: Run golden tests and checks
+name: Run Tests and Lint
 
 on:
   push:
@@ -11,41 +11,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-          cache: "poetry"
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-dev
 
-      - name: Install Python dependencies
+      - name: Install Poetry and dependencies
         run: |
           python -m pip install --upgrade pip
           pip install poetry numpy
+          poetry config virtualenvs.create true
           poetry install --no-interaction --no-ansi --with test
+
+      - name: Verify installations
+        run: |
+          python -c "import numpy; print(f'numpy version: {numpy.__version__}')"
           poetry show
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: |
-          poetry run pytest -v
+          poetry run coverage run -m pytest -v
 
       - name: Generate coverage report
         run: |
           poetry run coverage report
 
   lint:
-    name: Lint Checks
+    name: Run Linter
     runs-on: ubuntu-latest
     needs: test
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
