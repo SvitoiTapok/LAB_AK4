@@ -351,7 +351,27 @@ golden_test.py ........                                                         
 ============================================================================================================================================== 8 passed in 1.82s ===============================================================================================================================================
 ```
 работа тестов на github:
+```
+Run poetry run pytest -v
+============================= test session starts ==============================
+platform linux -- Python 3.11.12, pytest-7.4.4, pluggy-1.6.0 -- /home/runner/.cache/pypoetry/virtualenvs/asm-S5XbGgL8-py3.11/bin/python
+cachedir: .pytest_cache
+rootdir: /home/runner/work/LAB_AK4/LAB_AK4
+configfile: pytest.ini
+plugins: golden-0.2.2
+collecting ... collected 8 items
 
+golden_test.py::test_translator_and_machine_hello_world[golden/hello_world.yml] PASSED [ 12%]
+golden_test.py::test_translator_and_machine_cat[golden/cat.yml] PASSED   [ 25%]
+golden_test.py::test_translator_and_machine_hello_user_name_1[golden/hello_user_name_1.yml] PASSED [ 37%]
+golden_test.py::test_translator_and_machine_hello_user_name_2[golden/hello_user_name_2.yml] PASSED [ 50%]
+golden_test.py::test_translator_and_machine_new_sort[golden/new_sort.yml] PASSED [ 62%]
+golden_test.py::test_translator_and_machine_carry_check[golden/arith_64_add.yml] PASSED [ 75%]
+golden_test.py::test_translator_and_machine_mul_high[golden/arith_64_mul.yml] PASSED [ 87%]
+golden_test.py::test_translator_and_machine_prob1[golden/euler_task.yml] PASSED [100%]
+
+============================== 8 passed in 1.87s ===============================
+```
 Для тестирования использовались все необходимые программы, а именно:
 1) программа вывода Hello World! 
 2) программа hello_user - [golden/hello_user_name1.yml](golden/hello_user_name_1.yml) (для вопроса про имя), [golden/hello_user_name_2.yml](golden/hello_user_name_2.yml) (для приветствия пользователя)
