@@ -6,18 +6,17 @@ import os
 import re
 import shlex
 import sys
-from cProfile import label
 
 import numpy as np
 
-from isa import Opcode, Term, to_bytes, to_hex, opcode_to_binary
+from isa import Opcode, to_hex, opcode_to_binary
 
 memory = [0] * 2 ** 16
 labels = {}
 number_of_byte = 0
 def symbols():
     """Полное множество символов языка brainfuck."""
-    return {"not", "read", "write", "add", "sub", "mul", "and", "or", "beq", "bne","bvs", "bcs", "jump", "input", "output", "read_ind", "write_ind", "mul_high", "halt"}
+    return {"not", "read", "write", "add", "sub", "mul", "and", "or", "beq", "bne","bvs", "bcs", "jump", "read_ind", "write_ind", "mul_high", "halt"}
 
 
 def symbol2opcode(symbol):
@@ -36,8 +35,6 @@ def symbol2opcode(symbol):
         "bvs": Opcode.BVS,
         "bcs": Opcode.BCS,
         "jump": Opcode.JUMP,
-        "input": Opcode.INPUT,
-        "output": Opcode.OUTPUT,
         "read_ind": Opcode.READ_IND,
         "write_ind": Opcode.WRITE_IND,
         "mul_high": Opcode.MUL_HIGH,
@@ -51,13 +48,6 @@ def parse_label(label):
 
 
 def text2terms(text, i):
-    """Трансляция текста в последовательность операторов языка (токенов).
-
-    Включает в себя:
-
-    - отсеивание всех незначимых символов (считаются комментариями);
-    - проверка формальной корректности программы (парность оператора цикла).
-    """
     global labels
     global memory
     global number_of_byte
@@ -107,12 +97,17 @@ def int_to_bytes(integ):
     return first, second, third, fourth
 def byte_to_int(bytes):
     return int.from_bytes([int(x, 16) for x in bytes], byteorder='little', signed=True)
-    #return int(bytes[0], 16) + int(bytes[1], 16)*2**8 + int(bytes[2], 16)*2**16 + int(bytes[3], 16)*2**24
-def int_to_chars(integ):
-    first = chr(integ%2**8)
-    second = chr(integ//2**8%2**8)
-    third = chr(integ//2**16%2**8)
-    fourth = chr(integ//2**24%2**8)
+# def int_to_chars(integ):
+#     first = chr(integ%2**8)
+#     second = chr(integ//2**8%2**8)
+#     third = chr(integ//2**16%2**8)
+#     fourth = chr(integ//2**24%2**8)
+#     return first, second, third, fourth
+def int_to_ints(integ):
+    first = integ%2**8
+    second = integ//2**8%2**8
+    third = integ//2**16%2**8
+    fourth = integ//2**24%2**8
     return first, second, third, fourth
 
 
@@ -123,24 +118,7 @@ def translate(text):
     global number_of_byte
     memory = [0] * 2 ** 16
     labels = {}
-    number_of_byte = 0
-    """Трансляция текста программы в машинный код.
-
-    Выполняется в два этапа:
-
-    1. Трансляция текста в последовательность операторов языка (токенов).
-
-    2. Генерация машинного кода.
-
-        - Прямое отображение части операторов в машинный код.
-
-        - Отображение операторов цикла в инструкции перехода с учётом
-    вложенности и адресации инструкций. Подробнее см. в документации к
-    `isa.Opcode`.
-
-    """
-
-
+    number_of_byte = 8
 
     text = re.sub(r';.*$', '', text, flags=re.MULTILINE)
     text = shlex.split(text, posix=False)
@@ -168,6 +146,7 @@ def translate(text):
     text_ind = text.index(".text")
 
 
+    #первые 8 байт зарезервированны под потоки ввода-вывода
     memory_data_ind = 0
     ind = data_ind+1
     fl = True
@@ -211,14 +190,8 @@ def translate(text):
             else:
                 memory[number_of_byte] = opcode_to_binary[symbol2opcode(val)]
                 number_of_byte+=1
-                # new_value = parse_label(term[1])
-                # memory[number_of_byte:number_of_byte+4] = int_to_bytes(new_value)
                 number_of_byte+=4
                 code.append({"index": pc, "opcode": symbol2opcode(val), "arg": term[1]})
-                # begin = {"index": pc, "opcode": Opcode.JZ, "arg": pc + 1, "term": terms[begin_pc]}
-                # end = {"index": pc, "opcode": Opcode.JMP, "arg": begin_pc, "term": term}
-                # code[begin_pc] = begin
-                # code.append(end)
         if val == ".org":
             number_of_byte += int(text[i + 1])
             continue
@@ -244,7 +217,6 @@ def translate(text):
     code.append({"index": len(code), "opcode": Opcode.HALT})
     return code, memory_text_ind, memory_data_ind, labels.get("_start")
 
-# def main():
 def main(source, target):
     """Функция запуска транслятора. Параметры -- исходный и целевой файлы."""
     # with open(source, encoding="utf-8") as f:

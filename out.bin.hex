@@ -1,68 +1,16 @@
-10000 - data - 04000000          const_4
-10004 - data - 01000000          const_1
-10008 - data - 02000000          out
-10012 - data - 02000000          in
-10016 - data - 00000000          count
-10020 - data - 00000000          el_count
-10024 - data - 00000000          p_el_count
-10028 - data - 00000000          nul_point
-10032 - data - 00000000          cur_point
-10036 - data - 00000000          cur_el
-10040 - data - 00000000          buf_el
-10044 - data - ff000000          mask
-10048 - data - 00010000          mult
-10052 - data - 01000000          byt_count
-10056 - data - 00000001          total_b_co
-10060 - 0x0d 1c270000 - input          count_fetch
-10065 - 0x02 20270000 - write
-10070 - 0x0d 1c270000 - input          first_iteration
-10075 - 0x10 2c270000 - write value from address in arg
-10080 - 0x01 24270000 - read          sort_preparing
-10085 - 0x03 14270000 - add
-10090 - 0x02 24270000 - write
-10095 - 0x04 20270000 - subtract
-10100 - 0x08 1a280000 - jump if equal
-10105 - 0x01 2c270000 - read
-10110 - 0x02 30270000 - write
-10115 - 0x01 24270000 - read
-10120 - 0x02 28270000 - write
-10125 - 0x0d 1c270000 - input          sort_read
-10130 - 0x02 34270000 - write
-10135 - 0x0f 30270000 - read value from address in arg          find_write_ind
-10140 - 0x04 34270000 - subtract
-10145 - 0x00 - invert bits
-10146 - 0x03 14270000 - add
-10151 - 0x09 d4270000 - jump if negative
-10156 - 0x01 30270000 - read
-10161 - 0x03 10270000 - add
-10166 - 0x02 30270000 - write
-10171 - 0x01 28270000 - read
-10176 - 0x04 14270000 - subtract
-10181 - 0x02 28270000 - write
-10186 - 0x08 d4270000 - jump if equal
-10191 - 0x0c 97270000 - jump
-10196 - 0x0f 30270000 - read value from address in arg          write_element
-10201 - 0x02 38270000 - write
-10206 - 0x01 34270000 - read
-10211 - 0x10 30270000 - write value from address in arg
-10216 - 0x01 28270000 - read
-10221 - 0x08 60270000 - jump if equal
-10226 - 0x04 14270000 - subtract
-10231 - 0x02 28270000 - write
-10236 - 0x01 30270000 - read
-10241 - 0x03 10270000 - add
-10246 - 0x02 30270000 - write
-10251 - 0x01 38270000 - read
-10256 - 0x02 34270000 - write
-10261 - 0x0c d4270000 - jump
-10266 - 0x0f 2c270000 - read value from address in arg          loop
-10271 - 0x0e 18270000 - output
-10276 - 0x01 2c270000 - read
-10281 - 0x03 10270000 - add
-10286 - 0x02 2c270000 - write
-10291 - 0x01 20270000 - read
-10296 - 0x04 14270000 - subtract
-10301 - 0x08 4c280000 - jump if equal
-10306 - 0x02 20270000 - write
-10311 - 0x0c 1a280000 - jump
-10316 - 0x12 - halt          end
+8 - data - 68656c6c6f2c20776f726c6421          buffer
+21 - data - 08000000          buf_addr
+25 - data - 01000000          const_1
+29 - data - 04000000          out
+33 - data - 15000000          const_len
+37 - data - ff000000          mask
+41 - 0x0d 15000000 - read value from address in arg          loop
+46 - 0x06 25000000 - logical and
+51 - 0x0e 1d000000 - write value from address in arg
+56 - 0x01 15000000 - read
+61 - 0x03 19000000 - add
+66 - 0x02 15000000 - write
+71 - 0x04 21000000 - subtract
+76 - 0x08 56000000 - jump if equal
+81 - 0x0c 29000000 - jump
+86 - 0x10 - halt          end

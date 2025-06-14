@@ -1,16 +1,16 @@
     .data
 buffer:     .byte   'hello, world!'
-buf_addr:   .num    0
+buf_addr:   .num    8 ; первые 8 байт зарезервированны под порты ввода-вывода
 const_1:    .num    1
-out_1:      .num    1
-const_len:  .num    13  ;len of buffer
+out:        .num    4 ; адрес замапленого порта вывода
+const_len:  .num    21  ;len of buffer 13 + 8
 mask:       .num    255 ;aka 0xff
     .text
 _start:
 loop:
     read_ind    buf_addr
     and         mask
-    output      out_1
+    write_ind   out
     read        buf_addr
     add         const_1
     write       buf_addr

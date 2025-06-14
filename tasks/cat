@@ -1,60 +1,37 @@
-name: Run golden tests and checks
+#def GET_STR_LEN 1; макроопределения
+len_fetch:
+    read_ind    in_1
+    mul         byt_count
+    add         %1 ;запись 4-х байного числа в переменную sym_count
+    write       %1
+    read        byt_count
+    sub         total_b_co
+    beq         loop
+    read        byt_count
+    mul         mult
+    write       byt_count
+    jump        len_fetch
+#enddef
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-
-jobs:
-
-  test:
-    name: tests
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry install
-
-      - name: tests
-        run: |
-          poetry run coverage run -m pytest
-
-      - name: Generate coverage report
-        run: |
-          poetry run coverage report
-  lint:
-    name: Ruff & MyPy checks
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry install
-
-      - name: Run Ruff linter
-        run: |
-          poetry run ruff check .
-      #
-      #- name: Run MyPy type checks
-      #  run: |
-      #    poetry run mypy .
+    .data
+const_1:    .num    1
+out_1:      .num    4
+in_1:       .num    0 ;пусть передана паскаль строка
+sym_count:  .num    0
+mask:       .num    255
+mult:       .num    256 ;константа для корректного парсинга чисел
+byt_count:  .num    1
+total_b_co: .num    16777216
+    .text
+_start:
+    GET_STR_LEN sym_count
+loop:
+    read_ind    in_1
+    write_ind   out_1
+    read        sym_count
+    sub         const_1
+    beq         end ;проверка на конец
+    write       sym_count
+    jump        loop
+end:
+    halt

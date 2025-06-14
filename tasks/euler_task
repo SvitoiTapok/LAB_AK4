@@ -5,7 +5,7 @@ square_sum: .num    0
 const_100:  .num    100
 const_1:    .num    1
 cur_num:    .num    1
-out:        .num    2
+out:        .num    4
 
     .text
 _start:
@@ -44,6 +44,6 @@ sq_process:
     read        square_sum
     mul         square_sum
     sub         sum_square
-    output      out
+    write_ind   out
 end:
     halt

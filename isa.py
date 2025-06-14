@@ -38,8 +38,6 @@ class Opcode(str, Enum):
     BVS = "jump if V"
     BCS = "jump if C"
     JUMP = "jump"
-    INPUT = "input"
-    OUTPUT = "output"
     MUL_HIGH = "high part of mult(high 32 bits)"
     HALT = "halt"
 
@@ -69,12 +67,10 @@ opcode_to_binary = {
     Opcode.BVS: '0x0a',
     Opcode.BCS: '0x0b',
     Opcode.JUMP: '0x0c',
-    Opcode.INPUT: '0x0d',
-    Opcode.OUTPUT: '0x0e',
-    Opcode.READ_IND: '0x0f',
-    Opcode.WRITE_IND: '0x10',
-    Opcode.MUL_HIGH: '0x11',
-    Opcode.HALT: '0x12'
+    Opcode.READ_IND: '0x0d',
+    Opcode.WRITE_IND: '0x0e',
+    Opcode.MUL_HIGH: '0x0f',
+    Opcode.HALT: '0x10'
 }
 
 binary_to_opcode = {
@@ -91,52 +87,19 @@ binary_to_opcode = {
     '0x0a':   Opcode.BVS,
     '0x0b':   Opcode.BCS,
     '0x0c':  Opcode.JUMP,
-    '0x0d': Opcode.INPUT,
-    '0x0e': Opcode.OUTPUT,
-    '0x0f': Opcode.READ_IND,
-    '0x10': Opcode.WRITE_IND,
-    '0x11': Opcode.MUL_HIGH,
-    '0x12': Opcode.HALT
+    '0x0d': Opcode.READ_IND,
+    '0x0e': Opcode.WRITE_IND,
+    '0x0f': Opcode.MUL_HIGH,
+    '0x10': Opcode.HALT
 }
-
-
-def to_bytes(code):
-    """Преобразует машинный код в бинарное представление.
-
-    Бинарное представление инструкций:
-
-    ┌─────────┬─────────────────────────────────────────────────────────────┐
-    │ 31...24 │ 23                                                        0 │
-    ├─────────┼─────────────────────────────────────────────────────────────┤
-    │  опкод  │                      адрес перехода                         │
-    └─────────┴─────────────────────────────────────────────────────────────┘
-    """
-    binary_bytes = bytearray()
-    for instr in code:
-        # Получаем бинарный код операции
-        opcode_bin = opcode_to_binary[instr["opcode"]] << 28
-
-        # Добавляем адрес перехода, если он есть
-        arg = instr.get("arg", 0)
-
-        # Формируем 32-битное слово: опкод (4 бита) + адрес (28 бит)
-        binary_instr = opcode_bin | (arg & 0x00FFFFFF)
-
-        # Преобразуем 32-битное целое число в 4 байта (big-endian)
-        binary_bytes.extend(
-            ((binary_instr >> 24) & 0xFF, (binary_instr >> 16) & 0xFF, (binary_instr >> 8) & 0xFF, binary_instr & 0xFF)
-        )
-
-    return bytes(binary_bytes)
-
 
 def to_hex(memory, text_ind, labels, data_ind):
     """Преобразует машинный код в текстовый файл с шестнадцатеричным представлением.
 
     Формат вывода:
-    <address> - <HEXCODE> - <mnemonic>
+    <address> - <HEXCODE> <operand> - <mnemonic> - <label>
     Например:
-    20 - 03340301 - add #01 <- 34 + #03
+    10080 - 0x01 24270000 - read          sort_preparing
     """
     revers_labels = {labels[i]: i for i in labels}
     binary_code = memory
@@ -193,44 +156,3 @@ def to_hex(memory, text_ind, labels, data_ind):
             strin += f"          {revers_labels[i-5]}"
         result.append(strin)
     return "\n".join(result)
-
-
-def from_bytes(binary_code):
-    """Преобразует бинарное представление машинного кода в структурированный формат.
-
-    Бинарное представление инструкций:
-
-    ┌─────────┬─────────────────────────────────────────────────────────────┐
-    │ 31...28 │ 27                                                        0 │
-    ├─────────┼─────────────────────────────────────────────────────────────┤
-    │  опкод  │                      адрес перехода                         │
-    └─────────┴─────────────────────────────────────────────────────────────┘
-    """
-    structured_code = []
-    # Обрабатываем байты по 4 за раз для получения 32-битных инструкций
-    for i in range(0, len(binary_code), 4):
-        if i + 3 >= len(binary_code):
-            break
-
-        # Формируем 32-битное слово из 4 байтов
-        binary_instr = (
-            (binary_code[i] << 24) | (binary_code[i + 1] << 16) | (binary_code[i + 2] << 8) | binary_code[i + 3]
-        )
-
-        # Извлекаем опкод (старшие 4 бита)
-        opcode_bin = (binary_instr >> 28) & 0xF
-        opcode = binary_to_opcode[opcode_bin]
-
-        # Извлекаем адрес перехода (младшие 28 бит)
-        arg = binary_instr & 0x0FFFFFFF
-
-        # Формируем структуру инструкции
-        instr = {"index": i // 4, "opcode": opcode}
-
-        # Добавляем адрес перехода только для инструкций перехода
-        if opcode in (Opcode.JMP, Opcode.JZ):
-            instr["arg"] = arg
-
-        structured_code.append(instr)
-
-    return structured_code

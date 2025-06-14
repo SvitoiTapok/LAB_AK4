@@ -1,13 +1,14 @@
-    .data ; умножение двух 32-х битных чисел и запись результата в 8 байт
+; умножение двух 32-х битных чисел и запись результата в 8 байт
+    .data
 sum_low:    .num    0
 sum_high:   .num    0
-sum_point:  .num    0 ; было решено выводить посимвольно чтобы показать, что сложение прошло корректно
+sum_point:  .num    8 ; было решено выводить посимвольно чтобы показать, что сложение прошло корректно
 byte_c:     .num    8; 8 байт
 mask:       .num    255
 num_1:      .num    16777216 ; ff ff ff ff
 num_2:      .num    16777216 ; 00 00 00 42
 const_1:    .num    1
-out:        .num    2
+out:        .num    4
 
     .text
 _start:
@@ -20,7 +21,7 @@ _start:
 out_fetch:
     read_ind    sum_point
     and         mask
-    output      out
+    write_ind   out
 
     read        byte_c
     sub         const_1

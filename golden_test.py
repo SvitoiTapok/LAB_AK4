@@ -25,13 +25,13 @@ def test_translator_and_machine_hello_user_name_1(golden, caplog):
 @pytest.mark.golden_test("golden/hello_user_name_2.yml")
 def test_translator_and_machine_hello_user_name_2(golden, caplog):
     run_test(golden, caplog, False)
-#
+
 
 #
 @pytest.mark.golden_test("golden/new_sort.yml")
 def test_translator_and_machine_new_sort(golden, caplog):
     run_test(golden, caplog, False)
-
+#
 @pytest.mark.golden_test("golden/arith_64_add.yml")
 def test_translator_and_machine_carry_check(golden, caplog):
     run_test(golden, caplog, False)
@@ -43,7 +43,7 @@ def test_translator_and_machine_mul_high(golden, caplog):
 @pytest.mark.golden_test("golden/euler_task.yml")
 def test_translator_and_machine_prob1(golden, caplog):
     run_test(golden, caplog, False)
-
+#
 def run_test(golden, caplog, quiet_flag):
     caplog.set_level(logging.DEBUG)
 

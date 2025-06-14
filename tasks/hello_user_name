@@ -1,6 +1,6 @@
 #def GET_STR_LEN 1
 len_fetch:
-    input       in_1
+    read_ind    in_1
     mul         byt_count
     add         %1 ;запись 4-х байного числа в переменную sym_count
     write       %1
@@ -16,16 +16,16 @@ len_fetch:
 
     .data
 message:    .byte   'What is your name?'
-mes_len:    .num    18
-mes_addr:   .num    0
+mes_len:    .num    26
+mes_addr:   .num    8
 hello:      .byte   'Hello, '
-hel_len:    .num    33; 7 for len + 26 for start ind
-hel_addr:   .num    26
+hel_len:    .num    41; 7 for len + 34 for start ind
+hel_addr:   .num    34
 
 
 const_1:    .num    1
-out_1:      .num    1
-in_1:       .num    1 ;пусть передана паскаль строка
+out_1:      .num    4
+in_1:       .num    0 ;пусть передана паскаль строка
 
 sym_count:  .num    0
 mask:       .num    255
@@ -42,7 +42,7 @@ _start:
 default_message:
     read_ind    mes_addr
     and         mask
-    output      out_1
+    write_ind   out_1
     read        mes_addr
     add         const_1
     write       mes_addr
@@ -56,7 +56,7 @@ choose_message:
 hello_message:
     read_ind    hel_addr
     and         mask
-    output      out_1
+    write_ind   out_1
     read        hel_addr
     add         const_1
     write       hel_addr
@@ -64,8 +64,8 @@ hello_message:
     beq         write_name
     jump        hello_message
 write_name:
-    input       in_1
-    output      out_1
+    read_ind    in_1
+    write_ind   out_1
     read        sym_count
     sub         const_1
     beq         end ;проверка на конец

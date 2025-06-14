@@ -2,7 +2,7 @@
     .data
 sum_low:    .num    0
 sum_high:   .num    0
-sum_point:  .num    0 ; было решено выводить посимвольно чтобы показать, что сложение прошло корректно
+sum_point:  .num    8 ; было решено выводить посимвольно чтобы показать, что сложение прошло корректно
 byte_c:     .num    8; 8 байт
 mask:       .num    255
 num_1_low:  .num    -1 ; ff ff ff ff
@@ -11,7 +11,7 @@ num_2_low:  .num    66 ; 00 00 00 42
 num_2_high: .num    2  ; 00 00 00 02
 const_1:    .num    1
 
-out:        .num    2; для наглядности правильного применения арифметики
+out:        .num    4; для наглядности правильного применения арифметики
     .text
 _start:
     read        num_1_low
@@ -32,7 +32,7 @@ carry:
 out_fetch:
     read_ind    sum_point
     and         mask
-    output      out
+    write_ind   out
 
     read        byte_c
     sub         const_1

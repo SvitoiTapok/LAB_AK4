@@ -14,32 +14,13 @@
 import logging
 import sys
 from enum import Enum
-from unittest.mock import right
 import warnings
 import numpy as np
 
-from isa import Opcode, from_bytes, opcode_to_binary, binary_to_opcode
-from translator import byte_to_int, int_to_bytes, int_to_chars
+from translator import byte_to_int, int_to_bytes, int_to_ints
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 class Selector(str, Enum):
-    """Opcode для инструкций.
-
-    Можно разделить на две группы:
-
-    1. Непосредственно представленные на уровне языка: `RIGHT`, `LEFT`, `INC`, `DEC`, `INPUT`, `PRINT`.
-    2. Инструкции для управления, где:
-        - `JMP`, `JZ` -- безусловный и условный переходы:
-
-            | Operator Position | Исходный код | Машинный код |
-            |-------------------|--------------|--------------|
-            | n                 | `[`          | `JZ (k+1)`   |
-            | ...               | ...          |              |
-            | k                 |              |              |
-            | k+1               | `]`          | `JMP n`      |
-
-        - `HALT` -- остановка машины.
-    """
     PC="PС"
     ACC="ACC"
     ALU="ALU"
@@ -52,7 +33,6 @@ class Selector(str, Enum):
 
     def __str__(self):
         return str(self.value)
-
 
 class ALU:
     left_input = None
@@ -143,14 +123,12 @@ class DataPath:
     "Аккумулятор. Инициализируется нулём."
     data_operand = None
 
-    input_buffer1 = None
-    input_buffer2 = None
+    input_buffer = None
 
-    output_buffer1 = None
-    output_buffer2 = None
+    output_buffer = None
     "Буфер выходных данных."
 
-    def __init__(self, data_memory_size, data, input_buffer1, input_buffer2, pc):
+    def __init__(self, data_memory_size, data, input_buffer, pc):
         assert data_memory_size > 0, "Data_memory size should be non-zero"
         self.data_memory_size = data_memory_size
         self.data = data
@@ -159,25 +137,23 @@ class DataPath:
         self.program_counter = pc
         self.acc = 0
         self.ALU = ALU()
-        self.input_buffer1 = input_buffer1
-        self.input_buffer2 = input_buffer2
-        self.output_buffer1 = []
-        self.output_buffer2 = []
+        self.input_buffer = input_buffer
+        self.output_buffer = []
 
-    def signal_input(self):
-        # было принято непростое решение сделать первый поток ввода для символов, второй для чисел
-        num = self.data_operand
-        try:
-            if num==1:
-                byt, self.input_buffer1 = self.input_buffer1[0], self.input_buffer1[1:]
-                self.acc = ord(byt)
-                logging.debug("input: %s", repr(chr(self.acc)))
-            if num==2:
-                num, self.input_buffer2 = self.input_buffer2[0], self.input_buffer2[1:]
-                self.acc = num
-                logging.debug("input: %s", repr(self.acc))
-        except:
-            assert 0, "read from empty buffer"
+    # def signal_input(self):
+    #     # было принято непростое решение сделать первый поток ввода для символов, второй для чисел
+    #     num = self.data_operand
+    #     try:
+    #         if num==1:
+    #             byt, self.input_buffer1 = self.input_buffer1[0], self.input_buffer1[1:]
+    #             self.acc = ord(byt)
+    #             logging.debug("input: %s", repr(chr(self.acc)))
+    #         if num==2:
+    #             num, self.input_buffer2 = self.input_buffer2[0], self.input_buffer2[1:]
+    #             self.acc = num
+    #             logging.debug("input: %s", repr(self.acc))
+    #     except:
+    #         assert 0, "read from empty buffer"
 
     # def signal_latch_data_operand(self):
     #     self.data_operand = self.data[self.addres_register:self.addres_register+4]
@@ -194,20 +170,32 @@ class DataPath:
     def signal_latch_acc(self):
         self.acc = self.ALU.out
     def signal_read(self):
-        self.data_operand = byte_to_int(self.data[self.addres_register:self.addres_register+4])
+        if self.addres_register == 0:
+            try:
+                value, self.input_buffer = self.input_buffer[0], self.input_buffer[1:]
+                self.data_operand = value
+                logging.debug("input: %s", repr(self.acc))
+            except:
+                assert 0, "read from empty buffer"
+        else:
+            self.data_operand = byte_to_int(self.data[self.addres_register:self.addres_register+4])
     def signal_write(self):
-        self.data[self.addres_register:self.addres_register+4] = int_to_bytes(self.acc)
+        if self.addres_register == 4:
+            logging.debug("output: %s << %s", repr(" ".join(map(str, self.output_buffer))), self.acc)
+            self.output_buffer.append(self.acc)
+        else:
+            self.data[self.addres_register:self.addres_register+4] = int_to_bytes(self.acc)
 
 
-    def signal_output(self):
-        num = self.data_operand
-        if num == 1:
-            logging.debug("output1: %s << %s", repr("".join(map(chr, self.output_buffer1))), chr(self.acc))
-            self.output_buffer1.append(self.acc)
-
-        if num == 2:
-            logging.debug("output:2 %s << %s", repr(" ".join(map(str, self.output_buffer2))), self.acc)
-            self.output_buffer2.append(self.acc)
+    # def signal_output(self):
+    #     num = self.data_operand
+    #     if num == 1:
+    #         logging.debug("output1: %s << %s", repr("".join(map(chr, self.output_buffer1))), chr(self.acc))
+    #         self.output_buffer1.append(self.acc)
+    #
+    #     if num == 2:
+    #         logging.debug("output:2 %s << %s", repr(" ".join(map(str, self.output_buffer2))), self.acc)
+    #         self.output_buffer2.append(self.acc)
 
     def signal_latch_ALU_right_input(self):
         self.ALU.right_input = np.int32(self.acc)
@@ -256,16 +244,14 @@ class ControlUnit:
         7 - signal_not(ALU)
         8 - signal_or(ALU)
         9 - signal_and(ALU)
-        10 - signal_input(DP)
-        11 - signal_latch_acc(DP)
-        12 - signal_output(DP)
+        10 - signal_latch_acc(DP)
         #### 17 - signal_read_micro_command удален за ненадобностью, мы всегда читаем новую микрокоманду
-        13:14 - signal_latch_1_pc(00 - don't latch, 01 - right input on schema(+1), 10 - left(зависит от другого мультиплексора))
-        15:17 - signal_choose_flag (000 - instant false, 001 - carry_flag, 010 - zero_flag, 011 - neg_flag, 100 - overflow_flag, 101 - instant true)
-        18:19 - signal_latch_addres_reg(DP)       (00 - don't latch, 01 - from ALU, 10 = from ACC, 11 - from PС)
-        20 - signal_read(DP)
-        21 - signal_write(DP)
-        22 - halt
+        11:12 - signal_latch_1_pc(00 - don't latch, 01 - right input on schema(+1), 10 - left(зависит от другого мультиплексора))
+        13:15 - signal_choose_flag (000 - instant false, 001 - carry_flag, 010 - zero_flag, 011 - neg_flag, 100 - overflow_flag, 101 - instant true)
+        16:17 - signal_latch_addres_reg(DP)       (00 - don't latch, 01 - from ALU, 10 = from ACC, 11 - from PС)
+        18 - signal_read
+        19 - signal_write
+        20 - halt
     """
     LUT = {
             '0x00': 2,
@@ -281,130 +267,114 @@ class ControlUnit:
             '0x0a': 73,
             '0x0b': 77,
             '0x0c': 81,
-            '0x0d': 85,
-            '0x0e': 91,
-            '0x0f': 15,
-            '0x10': 23,
-            '0x11': 47,
-            '0x12': 4
+            '0x0d': 15,
+            '0x0e': 23,
+            '0x0f': 47,
+            '0x10': 4
     }
     microprogram_memory = [
-        '0 000000000 0 0 0 00 000 11 1 0 0', #pc -> ar; mem[ar] -> data_operand, нужно для начала чтения программы(получения первого опкода)
-        '1 000000000 0 0 0 01 000 00 0 0 0', #pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0', #pc -> ar; mem[ar] -> data_operand, нужно для начала чтения программы(получения первого опкода)
+        '1 000000000 0 01 000 00 0 0 0', #pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
 
-        '0 101000100 0 0 0 00 000 11 1 0 0', #NOT       acc -> left_ALU, ALU add, ALU not, pc -> ar; mem[ar] -> data_operand
-        '1 000000000 0 1 0 01 000 00 0 0 0',
+        '0 101000100 0 00 000 11 1 0 0', #NOT       acc -> left_ALU, ALU add, ALU not, pc -> ar; mem[ar] -> data_operand
+        '1 000000000 1 01 000 00 0 0 0',
 
-        '0 000000000 0 0 0 00 000 00 0 0 1', #HALT
+        '0 000000000 0 00 000 00 0 0 1', #HALT
 
-        '0 000000000 0 0 0 00 000 11 1 0 0', #READ arg_addr -> data_op                                         |
-        '0 010000010 0 0 0 10 000 01 0 0 0', # data_op+0 -> addr_reg, pc + 4 -> pc                             | - read_addr()
-        '0 000000000 0 0 0 00 000 00 1 0 0', # mem[addr_reg] -> data_op                                        |
-        '0 011000000 0 1 0 00 000 11 0 0 0', # arg + 0 -> acc,pc -> ar
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
-        '1 000000000 0 0 0 01 000 00 0 0 0', #pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0', #READ arg_addr -> data_op                                         |
+        '0 010000010 0 10 000 01 0 0 0', # data_op+0 -> addr_reg, pc + 4 -> pc                             | - read_addr()
+        '0 000000000 0 00 000 00 1 0 0', # mem[addr_reg] -> data_op                                        |
+        '0 011000000 1 00 000 11 0 0 0', # arg + 0 -> acc,pc -> ar
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
+        '1 000000000 0 01 000 00 0 0 0', #pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
 
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # WRITE arg_addr -> data_op
-        '0 010000010 0 0 0 10 000 01 0 1 0',  # data_op+0 -> addr_reg, acc -> mem[ar]
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # pc -> ar; mem[ar] -> data_operand, нужно для начала чтения программы(получения первого опкода)
-        '1 000000000 0 0 0 01 000 00 0 0 0',
+        '0 000000000 0 00 000 11 1 0 0',  # WRITE arg_addr -> data_op
+        '0 010000010 0 10 000 01 0 1 0',  # data_op+0 -> addr_reg, acc -> mem[ar]
+        '0 000000000 0 00 000 11 1 0 0',  # pc -> ar; mem[ar] -> data_operand, нужно для начала чтения программы(получения первого опкода)
+        '1 000000000 0 01 000 00 0 0 0',
 
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # READ_IND arg_addr -> data_op          |
-        '0 010000010 0 0 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
-        '0 011000000 0 0 0 00 000 01 0 0 0',  #
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
-        '0 011000000 0 1 0 00 000 11 0 0 0',
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0',  # READ_IND arg_addr -> data_op          |
+        '0 010000010 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
+        '0 011000000 0 00 000 01 0 0 0',  #
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
+        '0 011000000 1 00 000 11 0 0 0',
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
+        '1 000000000 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
 
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # WRITE_IND arg_addr -> data_op         |
-        '0 010000010 0 0 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
-        '0 011000000 0 0 0 00 000 01 0 1 0',
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # pc -> ar; mem[ar] -> data_operand
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0',  # WRITE_IND arg_addr -> data_op         |
+        '0 010000010 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
+        '0 011000000 0 00 000 01 0 1 0',
+        '0 000000000 0 00 000 11 1 0 0',  # pc -> ar; mem[ar] -> data_operand
+        '1 000000000 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
 
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # ADD       arg_addr -> data_op         |
-        '0 010000010 0 0 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
-        '0 111000000 0 1 0 00 000 11 0 0 0',
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0',  # ADD       arg_addr -> data_op         |
+        '0 010000010 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
+        '0 111000000 1 00 000 11 0 0 0',
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
+        '1 000000000 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
 
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # SUB       arg_addr -> data_op         |
-        '0 010000010 0 0 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
-        '0 110100000 0 1 0 00 000 11 0 0 0',
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0',  # SUB       arg_addr -> data_op         |
+        '0 010000010 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
+        '0 110100000 1 00 000 11 0 0 0',
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
+        '1 000000000 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
 
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # MUL       arg_addr -> data_op         |
-        '0 010000010 0 0 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
-        '0 110010000 0 1 0 00 000 11 0 0 0',
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0',  # MUL       arg_addr -> data_op         |
+        '0 010000010 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
+        '0 110010000 1 00 000 11 0 0 0',
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
+        '1 000000000 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
 
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # MUL_HIGH  arg_addr -> data_op         |
-        '0 010000010 0 0 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
-        '0 110001000 0 1 0 00 000 11 0 0 0',
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0',  # MUL_HIGH  arg_addr -> data_op         |
+        '0 010000010 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
+        '0 110001000 1 00 000 11 0 0 0',
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
+        '1 000000000 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
 
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # AND       arg_addr -> data_op         |
-        '0 010000010 0 0 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
-        '0 110000001 0 1 0 00 000 11 0 0 0',
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0',  # AND       arg_addr -> data_op         |
+        '0 010000010 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
+        '0 110000001 1 00 000 11 0 0 0',
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
+        '1 000000000 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
 
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # OR        arg_addr -> data_op         |
-        '0 010000010 0 0 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
-        '0 110000010 0 1 0 00 000 11 0 0 0',
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0',  # OR        arg_addr -> data_op         |
+        '0 010000010 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
+        '0 110000010 1 00 000 11 0 0 0',
+        '0 000000000 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
+        '1 000000000 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
 
-        '0 000000000 0 0 0 00 000 11 1 0 0',   # BEQ        arg_addr -> data_op
-        '0 000000000 0 0 0 10 010 00 0 0 0',
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # pc -> ar; mem[ar] -> data_operand
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0',   # BEQ        arg_addr -> data_op
+        '0 000000000 0 10 010 00 0 0 0',
+        '0 000000000 0 00 000 11 1 0 0',  # pc -> ar; mem[ar] -> data_operand
+        '1 000000000 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
 
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # BNE        arg_addr -> data_op
-        '0 000000000 0 0 0 10 011 00 0 0 0',
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # pc -> ar; mem[ar] -> data_operand
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0',  # BNE        arg_addr -> data_op
+        '0 000000000 0 10 011 00 0 0 0',
+        '0 000000000 0 00 000 11 1 0 0',  # pc -> ar; mem[ar] -> data_operand
+        '1 000000000 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
 
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # BVS        arg_addr -> data_op
-        '0 000000000 0 0 0 10 100 00 0 0 0',
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # pc -> ar; mem[ar] -> data_operand
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0',  # BVS        arg_addr -> data_op
+        '0 000000000 0 10 100 00 0 0 0',
+        '0 000000000 0 00 000 11 1 0 0',  # pc -> ar; mem[ar] -> data_operand
+        '1 000000000 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
 
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # BVC        arg_addr -> data_op
-        '0 000000000 0 0 0 10 001 00 0 0 0',
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # pc -> ar; mem[ar] -> data_operand
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0',  # BVC        arg_addr -> data_op
+        '0 000000000 0 10 001 00 0 0 0',
+        '0 000000000 0 00 000 11 1 0 0',  # pc -> ar; mem[ar] -> data_operand
+        '1 000000000 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
 
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # JUMP        arg_addr -> data_op
-        '0 000000000 0 0 0 10 101 00 0 0 0',
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # pc -> ar; mem[ar] -> data_operand
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
-
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # INPUT        arg_addr -> data_op      |
-        '0 010000010 0 0 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
-        '0 000000000 1 0 0 00 000 11 0 0 0',  # input -> acc, pc -> ar; mem[ar] -> data_operand
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
-
-        '0 000000000 0 0 0 00 000 11 1 0 0',  # INPUT        arg_addr -> data_op      |
-        '0 010000010 0 0 0 10 000 01 0 0 0',  # data_op+0 -> addr_reg, pc + 4 -> pc   | - read_addr()
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op              |
-        '0 000000000 0 0 1 00 000 11 0 0 0',  # input -> acc, pc -> ar; mem[ar] -> data_operand
-        '0 000000000 0 0 0 00 000 00 1 0 0',  # mem[addr_reg] -> data_op
-        '1 000000000 0 0 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
+        '0 000000000 0 00 000 11 1 0 0',  # JUMP        arg_addr -> data_op
+        '0 000000000 0 10 101 00 0 0 0',
+        '0 000000000 0 00 000 11 1 0 0',  # pc -> ar; mem[ar] -> data_operand
+        '1 000000000 0 01 000 00 0 0 0',  # pc+1 -> pc; адрес микропрограммы, соотвтествующей следующему опкоду загружен
     ]
     data_path = None
     mpc = None
@@ -415,7 +385,6 @@ class ControlUnit:
     "Текущее модельное время процессора (в тактах). Инициализируется нулём."
 
     def __init__(self, data_path):
-        # self.data = data
         self.data_path = data_path
         self.mpc = 0
         self._tick = 0
@@ -446,57 +415,53 @@ class ControlUnit:
         if microcomand[9] == '1':
             self.data_path.ALU.signal_and()
         if microcomand[10] == '1':
-            self.data_path.signal_input()
-        if microcomand[11] == '1':
             self.data_path.signal_latch_acc()
-        if microcomand[12] == '1':
-            self.data_path.signal_output()
-        if microcomand[13:15] == '00':
+        if microcomand[11:13] == '00':
             pass
-        elif microcomand[13:15] == '01':
+        elif microcomand[11:13] == '01':
             self.data_path.signal_latch_pc(Selector.ADD1)
         else:
-            if microcomand[15:18] == '000':
+            if microcomand[13:16] == '000':
                 self.data_path.signal_latch_pc(Selector.ADD4)
-            if microcomand[15:18] == '001':
+            if microcomand[13:16] == '001':
                 if self.data_path.carry():
                     self.data_path.signal_latch_pc(Selector.DATA_OPERAND)
                 else:
                     self.data_path.signal_latch_pc(Selector.ADD4)
 
-            if microcomand[15:18] == '010':
+            if microcomand[13:16] == '010':
                 if self.data_path.zero():
                     self.data_path.signal_latch_pc(Selector.DATA_OPERAND)
                 else:
                     self.data_path.signal_latch_pc(Selector.ADD4)
 
-            if microcomand[15:18] == '011':
+            if microcomand[13:16] == '011':
                 if self.data_path.neg():
                     self.data_path.signal_latch_pc(Selector.DATA_OPERAND)
                 else:
                     self.data_path.signal_latch_pc(Selector.ADD4)
 
-            if microcomand[15:18] == '100':
+            if microcomand[13:16] == '100':
                 if self.data_path.overflow():
                     self.data_path.signal_latch_pc(Selector.DATA_OPERAND)
                 else:
                     self.data_path.signal_latch_pc(Selector.ADD4)
-            if microcomand[15:18] == '101':
+            if microcomand[13:16] == '101':
                 self.data_path.signal_latch_pc(Selector.DATA_OPERAND)
-        if microcomand[18:20] == '00':
+        if microcomand[16:18] == '00':
             pass
-        elif microcomand[18:20] == '01':
+        elif microcomand[16:18] == '01':
 
             self.data_path.signal_latch_addres_reg(Selector.ALU)
-        elif microcomand[18:20] == '10':
+        elif microcomand[16:18] == '10':
             self.data_path.signal_latch_addres_reg(Selector.ACC)
         else:
             self.data_path.signal_latch_addres_reg(Selector.PC)
-        if microcomand[20] == '1':
+        if microcomand[18] == '1':
             self.data_path.signal_read()
-        if microcomand[21] == '1':
+        if microcomand[19] == '1':
             self.data_path.signal_write()
-        if microcomand[22] == '1':
+        if microcomand[20] == '1':
             raise StopIteration()
     def tick(self):
         """Продвинуть модельное время процессора вперёд на один такт."""
@@ -570,7 +535,7 @@ class ControlUnit:
         return state_repr
 
 
-def simulation(data, input_1, input_2, data_memory_size, limit, pc):
+def simulation(data, input, data_memory_size, limit, pc):
     """Подготовка модели и запуск симуляции процессора.
 
     Длительность моделирования ограничена:
@@ -582,7 +547,7 @@ def simulation(data, input_1, input_2, data_memory_size, limit, pc):
 
     - инструкцией `Halt`, через исключение `StopIteration`.
     """
-    data_path = DataPath(data_memory_size,data, input_1, input_2, pc)
+    data_path = DataPath(data_memory_size,data, input, pc)
     control_unit = ControlUnit(data_path)
 
     logging.debug("%s", control_unit)
@@ -597,11 +562,9 @@ def simulation(data, input_1, input_2, data_memory_size, limit, pc):
 
     if control_unit._tick >= limit:
         logging.warning("Limit exceeded!")
-    logging.info("output_buffer1: %s", repr("".join(map(chr, data_path.output_buffer1))))
-    logging.info("output_buffer2: %s", repr(" ".join(map(str, data_path.output_buffer2))))
-    logging.info("general tick count: %s", repr(control_unit.current_tick()))
+        #         logging.debug("output:2 %s << %s", repr(" ".join(map(str, self.output_buffer2))), self.acc)
 
-    return " ".join(map(str, data_path.output_buffer2)), " ".join(map(str, data_path.output_buffer1)), control_unit.current_tick()
+    return data_path.output_buffer, control_unit.current_tick()
 
 
 def main(code_file, input_file, quiet_flag):
@@ -624,32 +587,32 @@ def main(code_file, input_file, quiet_flag):
 
 
     symbol_file = True
-    input_1 = []
-    input_2 = []
-    #надо решить че там с двумя потоками ввода
+    input = []
     with open(input_file, encoding="utf-8") as file:
         input_text = file.read()
         input_token = []
         if input_text[0]=='n':
-            line = file.readline()
-            mass = []
+            symbol_file = False
             for i in input_text.split()[1:]:
-                mass = mass + [int(i)]
-            input_2 = [len(mass)] + mass
-            print(input_2)
+                input_token = input_token + [int(i)]
+            input = [len(input_token)] + input_token
         else:
             for char in input_text[1:]:
-                input_token.append(char)
-            input_1 = list(int_to_chars(len(input_token))) + input_token
-    output1, output2, ticks = simulation(
+                input_token.append(ord(char))
+            input = list(int_to_ints(len(input_token))) + input_token
+    output, ticks = simulation(
         data,
-        input_1=input_1,
-        input_2=input_2,
+        input = input,
         data_memory_size=15000,
         limit=50000,
         pc=start_ind
     )
-
+    if symbol_file:
+        logging.info("output_buffer: %s", repr("".join(map(chr, output))))
+        logging.info("general tick count: %s", repr(ticks))
+    else:
+        logging.info("output_buffer: %s", repr(" ".join(map(str, output))))
+        logging.info("general tick count: %s", repr(ticks))
 
 original_stdout = sys.stdout
 original_stderr = sys.stderr

@@ -3,32 +3,26 @@
 
 const_4:    .num    4
 const_1:    .num    1
-out:        .num    2 ; IO для чисел
-in:         .num    2
+out:        .num    4 ; IO для чисел
+in:         .num    0
 
 count:      .num    0;  общее количество элементов
 el_count:   .num    0;  количество обработанных элементов
 p_el_count: .num    0;  количество элементов, которые надо переставить(стоящих правее добавленного элемента)
-nul_point:  .num    0;  константный ноль, указывающий на начало списка
-cur_point:  .num    0;  текущее положение в списке
+nul_point:  .num    8;  константный ноль, указывающий на начало списка(8 из-за MMIO)
+cur_point:  .num    8;  текущее положение в списке
 cur_el:     .num    0;  текущий элемент
 buf_el:     .num    0; буфферный элемент, нужен при смещении элементов
 mask:       .num    255
 
-
-mult:       .num    256 ;константа для корректного парсинга чисел
-byt_count:  .num    1
-total_b_co: .num    16777216
-
     .text
 
 _start:
-count_fetch:
-    input       in
+    read_ind    in
     write       count ;можно обработать ввод числа большего чем 2500, но это усложнит код и задание как-будто не про это
 
 first_iteration:
-    input       in
+    read_ind    in
     write_ind   nul_point
 
 sort_preparing:
@@ -45,7 +39,7 @@ sort_preparing:
     write       p_el_count
 
 sort_read:
-    input       in
+    read_ind    in
     write       cur_el
 
 find_write_ind:;у нас есть cur_el, мы должны пометить в cur_point позицию, куда его надо вставить, а все остальное(остальные p_el_count) сдвинуть вправо
@@ -89,7 +83,7 @@ write_element:
 output_answ:
 loop:
     read_ind    nul_point
-    output      out
+    write_ind      out
     read        nul_point
     add         const_4
     write       nul_point
