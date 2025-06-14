@@ -82,6 +82,15 @@ select = [
     "PD",
     # tryceratops (try/except-related advices)
     "TRY",
+    "Q000", # Стиль кавычек
+    "W292", # Отсутствует новая строка в конце файла
+    "F401", # Неиспользуемые импорты
+    "E722", # "Голый" except
+    "N802", # Имена функций в camelCase
+    "A001",
+    "A002",  #Переопределение встроенных имен"
+    "E714",  # Тест identity должен использовать is not
+
     # ruff-specific advices
     "RUF",
 ]
