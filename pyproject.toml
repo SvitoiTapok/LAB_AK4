@@ -116,6 +116,13 @@ ignore = [
     "A001",
     "A002",  #Переопределение встроенных имен"
     "E714",  # Тест identity должен использовать is not
+    "PT015",  # Assertion
+    "RUF012", # Mutable class attributes
+    "RUF100", # Unused noqa
+    "RET504", # Unnecessary assignment
+    "RUF005", # List concatenation
+    "E701",   # Multiple statements
+    "E721",   # Type comparison
 
 
 ]
