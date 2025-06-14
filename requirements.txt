@@ -1,0 +1,6 @@
+pytest
+coverage
+ruff
+PyYAML
+ruff
+mypy
